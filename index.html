@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spell Deck</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#7a1f1f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Spell Deck">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#f4efe6;--fg:#2b2118;--card:#fffaf0;--ac:#7a1f1f;--mut:#8a7b68;--bd:#d8cbb4}
+@media(prefers-color-scheme:dark){:root{--bg:#1c1713;--fg:#eee4d2;--card:#2a231c;--ac:#d96a5a;--mut:#a89983;--bd:#443a2e}}
+*{box-sizing:border-box}body{margin:0;font:16px Georgia,serif;background:var(--bg);color:var(--fg)}
+header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--bd);padding:8px 12px;z-index:5}
+.tabs{display:flex;gap:8px;margin-bottom:8px}
+button,select,input{font:inherit;color:inherit;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:7px 10px}
+.tab{flex:1;font-weight:bold}.tab.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.bar{display:flex;gap:6px;flex-wrap:wrap}.bar input{flex:1;min-width:120px}
+#st{font-size:12px;color:var(--mut);margin-top:6px}
+main{padding:10px 12px 60px;max-width:1100px;margin:auto}
+.row{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--bd)}
+.row input{width:20px;height:20px;accent-color:var(--ac)}.row .n{flex:1}.row small{color:var(--mut)}
+.row .v{background:none;border:none;color:var(--ac);padding:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.card{background:var(--card);border:2px solid var(--ac);border-radius:12px;padding:12px;display:flex;flex-direction:column;max-height:560px}
+.card h3{margin:0;color:var(--ac)}.card .meta{font-style:italic;color:var(--mut);font-size:13px;margin-bottom:6px}
+.card dl{margin:0 0 6px;font-size:13px;display:grid;grid-template-columns:auto 1fr;gap:1px 8px;border-block:1px solid var(--bd);padding:5px 0}
+.card dt{font-weight:bold}.card dd{margin:0}
+.body{overflow:auto;font-size:14px;flex:1}.body p{margin:0 0 6px}
+.card .ft{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mut);margin-top:6px;gap:6px}
+.empty{text-align:center;color:var(--mut);padding:40px 10px}
+.hi{color:var(--ac)}
+</style></head><body>
+<header>
+<div class="tabs"><button class="tab on" id="t1">Spells</button><button class="tab" id="t2">Deck (<span id="cnt">0</span>)</button></div>
+<div class="bar">
+<input id="q" type="search" placeholder="Search…">
+<select id="sort"><option value="az">A–Z</option><option value="lvl">Level</option></select>
+<select id="cls"><option value="">All classes</option></select>
+<button id="upd">Update</button></div>
+<div id="st">Loading…</div>
+</header>
+<main id="m"></main>
+<script>
+const BASE="https://raw.githubusercontent.com/5etools-mirror-3/5etools-src/main/data/";
+const SCH={A:"Abjuration",C:"Conjuration",D:"Divination",E:"Enchantment",V:"Evocation",I:"Illusion",N:"Necromancy",T:"Transmutation"};
+const $=s=>document.getElementById(s);
+let spells=[],sel=new Set(JSON.parse(localStorage.getItem("deck")||"[]")),tab=1,open=new Set();
+const key=s=>s.name+"|"+s.source;
+const db=()=>new Promise((r,j)=>{const q=indexedDB.open("spelldeck",1);q.onupgradeneeded=()=>q.result.createObjectStore("kv");q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)});
+async function idb(mode,fn){const d=await db();return new Promise((r,j)=>{const t=d.transaction("kv",mode),q=fn(t.objectStore("kv"));t.oncomplete=()=>r(q&&q.result);t.onerror=()=>j(t.error)})}
+const get=k=>idb("readonly",s=>s.get(k)),put=(k,v)=>idb("readwrite",s=>s.put(v,k));
+const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+function clean(t){return String(t).replace(/\{@h\}/g,"Hit: ").replace(/\{@(\w+)\s*([^}]*)\}/g,(_,tag,a)=>{const p=a.split("|");return/^(dice|damage|scaledamage|scaledice)$/.test(tag)?p[0]:(p[2]||p[0])})}
+const strip=h=>h.replace(/<\/?p>/g," ");
+function render(e){if(e==null)return"";if(typeof e==="string")return"<p>"+esc(clean(e))+"</p>";
+if(Array.isArray(e))return e.map(render).join("");
+if(e.type==="list")return"<ul>"+(e.items||[]).map(i=>"<li>"+(typeof i==="string"?esc(clean(i)):(i.name?"<b>"+esc(clean(i.name))+"</b> ":"")+strip(render(i.entries||i.entry||"")))+"</li>").join("")+"</ul>";
+if(e.type==="table")return(e.caption?"<p><i>"+esc(clean(e.caption))+"</i></p>":"")+(e.rows||[]).map(r=>"<p>"+r.map(c=>esc(clean(typeof c==="object"?(c.roll?(c.roll.exact??c.roll.min+"-"+c.roll.max):JSON.stringify(c)):c))).join(" — ")+"</p>").join("");
+return(e.name?"<p><b>"+esc(clean(e.name))+".</b></p>":"")+render(e.entries||e.entry||"")}
+const ordl=l=>l===0?"Cantrip":l+(["st","nd","rd"][l-1]||"th")+"-level";
+const lvlName=l=>l===0?"Cantrips":"Level "+l;
+function slim(s,lookup){
+ const cl=new Set(),lk=lookup&&lookup[s.source.toLowerCase()]?.[s.name.toLowerCase()];
+ if(lk?.class)Object.values(lk.class).forEach(o=>Object.keys(o).forEach(c=>cl.add(c)));
+ (s.classes?.fromClassList||[]).forEach(c=>cl.add(c.name));
+ const t=s.time?.[0],r=s.range,d=s.duration?.[0],c=s.components||{};
+ const range=!r?"":r.type==="point"?(r.distance?.type==="self"?"Self":r.distance?.type==="touch"?"Touch":r.distance?((r.distance.amount||"")+" "+r.distance.type).trim():"Special"):"Self ("+(r.distance?.amount||"")+" "+(r.distance?.type||"")+" "+r.type+")";
+ const dur=!d?"":d.type==="instant"?"Instantaneous":d.type==="timed"?(d.concentration?"Concentration, up to ":"")+d.duration.amount+" "+d.duration.type+(d.duration.amount>1?"s":""):d.type==="permanent"?"Until dispelled":"Special";
+ const comp=[c.v&&"V",c.s&&"S",c.m&&"M ("+clean(typeof c.m==="string"?c.m:c.m.text||"")+")"].filter(Boolean).join(", ");
+ return{name:s.name,source:s.source,level:s.level,school:SCH[s.school]||s.school||"",time:t?t.number+" "+t.unit:"",range,comp,dur,ritual:!!s.meta?.ritual,classes:[...cl].sort(),text:render(s.entries)+(s.entriesHigherLevel?render(s.entriesHigherLevel):"")}}
+async function fetchAll(){
+ $("st").textContent="Downloading spells from 5etools…";
+ const j=u=>fetch(BASE+u).then(r=>{if(!r.ok)throw Error(u);return r.json()});
+ const idx=await j("spells/index.json");
+ let lookup=null;try{lookup=await j("generated/gendata-spell-source-lookup.json")}catch(e){}
+ const files=await Promise.all(Object.values(idx).map(f=>j("spells/"+f).catch(()=>({spell:[]}))));
+ const out=[];files.forEach(f=>(f.spell||[]).forEach(s=>{if(!s.reprintedAs)out.push(slim(s,lookup))}));
+ await put("spells",out);await put("when",Date.now());return out}
+async function init(force){
+ const cached=await get("spells"),when=(await get("when"))||0;
+ if(cached){spells=cached;ui();$("st").textContent=spells.length+" spells (saved copy, "+new Date(when).toLocaleDateString()+")"}
+ if(force||!cached||Date.now()-when>864e5){
+  if(!navigator.onLine){if(!cached)$("st").textContent="Offline and no saved spells yet. Open once while online.";return}
+  try{spells=await fetchAll();$("st").textContent=spells.length+" spells — updated just now";ui()}
+  catch(e){$("st").textContent=cached?spells.length+" spells (saved copy; update failed)":"Couldn't reach 5etools: "+e.message}}}
+function ui(){
+ const cs=new Set();spells.forEach(s=>s.classes.forEach(c=>cs.add(c)));
+ const cur=$("cls").value;$("cls").innerHTML='<option value="">All classes</option>'+[...cs].sort().map(c=>`<option>${c}</option>`).join("");$("cls").value=cur;draw()}
+function save(){localStorage.setItem("deck",JSON.stringify([...sel]));$("cnt").textContent=sel.size}
+function list(){const q=$("q").value.toLowerCase(),c=$("cls").value;
+ const a=spells.filter(s=>(!c||s.classes.includes(c))&&s.name.toLowerCase().includes(q));
+ return a.sort($("sort").value==="lvl"?(x,y)=>x.level-y.level||x.name.localeCompare(y.name):(x,y)=>x.name.localeCompare(y.name))}
+function cardHtml(s,x){return`<div class="card"><h3>${esc(s.name)}</h3><div class="meta">${ordl(s.level)} ${esc(s.school.toLowerCase())}${s.ritual?" (ritual)":""}</div>
+<dl><dt>Cast</dt><dd>${esc(s.time)}</dd><dt>Range</dt><dd>${esc(s.range)}</dd><dt>Comp.</dt><dd>${esc(s.comp)}</dd><dt>Dur.</dt><dd>${esc(s.dur)}</dd></dl>
+<div class="body">${s.text}</div><div class="ft"><span>${esc(s.classes.join(", "))} · ${esc(s.source)}</span>${x?`<button data-rm="${esc(key(s))}">Remove</button>`:""}</div></div>`}
+function draw(){save();$("t1").classList.toggle("on",tab===1);$("t2").classList.toggle("on",tab===2);
+ document.querySelector(".bar").style.display=tab===1?"flex":"none";const m=$("m");
+ if(tab===1){const a=list(),lv=$("sort").value==="lvl";let last=null,h="";
+  a.forEach(s=>{if(lv&&s.level!==last){last=s.level;h+=`<h3 class="hi">${lvlName(s.level)}</h3>`}
+   const k=key(s);h+=`<div class="row"><input type="checkbox" data-k="${esc(k)}" ${sel.has(k)?"checked":""}><span class="n">${esc(s.name)} <small>${s.level?"L"+s.level:"Cantrip"} · ${esc(s.school)} · ${esc(s.source)}</small></span><button class="v" data-v="${esc(k)}">${open.has(k)?"Hide":"View"}</button></div>`+(open.has(k)?`<div style="padding:8px 0">${cardHtml(s)}</div>`:"")});
+  m.innerHTML=h||'<div class="empty">'+(spells.length?"No matches.":"Loading spells…")+"</div>"}
+ else{const a=spells.filter(s=>sel.has(key(s))).sort((x,y)=>x.level-y.level||x.name.localeCompare(y.name));
+  m.innerHTML=a.length?'<div class="grid">'+a.map(s=>cardHtml(s,1)).join("")+"</div>":'<div class="empty">Your deck is empty. Pick spells on the Spells tab.</div>'}}
+document.addEventListener("click",e=>{const t=e.target;
+ if(t.id==="t1"){tab=1;draw()}else if(t.id==="t2"){tab=2;draw()}else if(t.id==="upd")init(true);
+ else if(t.dataset.v){open.has(t.dataset.v)?open.delete(t.dataset.v):open.add(t.dataset.v);const y=scrollY;draw();scrollTo(0,y)}
+ else if(t.dataset.rm){sel.delete(t.dataset.rm);draw()}});
+document.addEventListener("change",e=>{const t=e.target;if(t.dataset.k){t.checked?sel.add(t.dataset.k):sel.delete(t.dataset.k);save()}else if(t.id==="sort"||t.id==="cls")draw()});
+$("q").addEventListener("input",draw);
+$("cnt").textContent=sel.size;init();
+if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script></body></html>
