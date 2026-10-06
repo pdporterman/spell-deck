@@ -59,7 +59,14 @@ const db=()=>new Promise((r,j)=>{const q=indexedDB.open("spelldeck",1);q.onupgra
 async function idb(mode,fn){const d=await db();return new Promise((r,j)=>{const t=d.transaction("kv",mode),q=fn(t.objectStore("kv"));t.oncomplete=()=>r(q&&q.result);t.onerror=()=>j(t.error)})}
 const get=k=>idb("readonly",s=>s.get(k)),put=(k,v)=>idb("readwrite",s=>s.put(v,k));
 const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
-function clean(t){return String(t).replace(/\{@h\}/g,"Hit: ").replace(/\{@(\w+)\s*([^}]*)\}/g,(_,tag,a)=>{const p=a.split("|");return/^(dice|damage|scaledamage|scaledice)$/.test(tag)?p[0]:(p[2]||p[0])})}
+function clean(t){return String(t).replace(/\{@h\}/g,"Hit: ").replace(/\{@(\w+)\s*([^}]*)\}/g,(_,tag,a)=>{const p=a.split("|");
+ if(tag==="scaledamage"||tag==="scaledice")return p[3]||p[2]||p[0];
+ if(tag==="dice")return p[1]||p[0];
+ if(tag==="damage")return p[0];
+ if(tag==="dc")return"DC "+p[0];
+ if(tag==="hit")return(+p[0]>=0?"+":"")+p[0];
+ if(tag==="atk")return({ms:"Melee Spell Attack:",rs:"Ranged Spell Attack:",mw:"Melee Weapon Attack:",rw:"Ranged Weapon Attack:"})[p[0]]||"Attack:";
+ return p[2]||p[0]})}
 const strip=h=>h.replace(/<\/?p>/g," ");
 function render(e){if(e==null)return"";if(typeof e==="string")return"<p>"+esc(clean(e))+"</p>";
 if(Array.isArray(e))return e.map(render).join("");
@@ -70,7 +77,7 @@ const ordl=l=>l===0?"Cantrip":l+(["st","nd","rd"][l-1]||"th")+"-level";
 const lvlName=l=>l===0?"Cantrips":"Level "+l;
 function slim(s,lookup){
  const cl=new Set(),lk=lookup&&lookup[s.source.toLowerCase()]?.[s.name.toLowerCase()];
- if(lk?.class)Object.values(lk.class).forEach(o=>Object.keys(o).forEach(c=>cl.add(c)));
+ for(const f of["class","classVariant"])if(lk?.[f])Object.values(lk[f]).forEach(o=>Object.keys(o).forEach(c=>cl.add(c)));
  (s.classes?.fromClassList||[]).forEach(c=>cl.add(c.name));
  const t=s.time?.[0],r=s.range,d=s.duration?.[0],c=s.components||{};
  const range=!r?"":r.type==="point"?(r.distance?.type==="self"?"Self":r.distance?.type==="touch"?"Touch":r.distance?((r.distance.amount||"")+" "+r.distance.type).trim():"Special"):"Self ("+(r.distance?.amount||"")+" "+(r.distance?.type||"")+" "+r.type+")";
@@ -84,11 +91,11 @@ async function fetchAll(){
  let lookup=null;try{lookup=await j("generated/gendata-spell-source-lookup.json")}catch(e){}
  const files=await Promise.all(Object.values(idx).map(f=>j("spells/"+f).catch(()=>({spell:[]}))));
  const out=[];files.forEach(f=>(f.spell||[]).forEach(s=>{if(!s.reprintedAs)out.push(slim(s,lookup))}));
- await put("spells",out);await put("when",Date.now());return out}
+ await put("spells",out);await put("ver",2);await put("when",Date.now());return out}
 async function init(force){
- const cached=await get("spells"),when=(await get("when"))||0;
+ const cached=await get("spells"),when=(await get("when"))||0,ver=await get("ver");
  if(cached){spells=cached;ui();$("st").textContent=spells.length+" spells (saved copy, "+new Date(when).toLocaleDateString()+")"}
- if(force||!cached||Date.now()-when>864e5){
+ if(force||!cached||ver!==2||Date.now()-when>864e5){
   if(!navigator.onLine){if(!cached)$("st").textContent="Offline and no saved spells yet. Open once while online.";return}
   try{spells=await fetchAll();$("st").textContent=spells.length+" spells — updated just now";ui()}
   catch(e){$("st").textContent=cached?spells.length+" spells (saved copy; update failed)":"Couldn't reach 5etools: "+e.message}}}
