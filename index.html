@@ -45,7 +45,7 @@ main{padding:10px 12px 60px;max-width:1100px;margin:auto}
 <div id="st">Loading…</div>
 </header>
 <div id="ov"></div>
-<nav id="drawer"><h2>Spell Deck</h2><button data-go="0">Characters</button><button data-go="1">Spells</button><button data-go="2">Deck</button><button data-go="3">Settings</button></nav>
+<nav id="drawer"><h2>Spell Deck</h2><button data-go="0">Characters</button><button data-go="s">Spells</button><button data-go="3">Settings</button></nav>
 <main id="m"></main>
 <script>
 const BASE="https://raw.githubusercontent.com/5etools-mirror-3/5etools-src/main/data/";
@@ -53,10 +53,10 @@ const SCH={A:"Abjuration",C:"Conjuration",D:"Divination",E:"Enchantment",V:"Evoc
 const $=s=>document.getElementById(s);
 let spells=[],tab=0,open=new Set(),chars=JSON.parse(localStorage.getItem("chars")||"null"),cur=localStorage.getItem("cur"),sel=new Set();
 if(!chars){chars={};const old=JSON.parse(localStorage.getItem("deck")||"[]");if(old.length){chars.c0={name:"My Character",deck:old};cur="c0"}}
-if(!chars[cur])cur=null;if(cur)sel=new Set(chars[cur].deck);
+if(!chars[cur])cur=null;if(cur)sel=new Set(chars[cur].deck);tab=cur?2:1;
 function setCur(id){cur=id;sel=new Set(chars[id].deck);localStorage.setItem("cur",id)}
 function setTh(t){document.documentElement.dataset.theme=t;localStorage.setItem("theme",t);if($("nm"))$("nm").checked=t==="dark"}
-const VER=4,menu=o=>{$("drawer").classList.toggle("open",!!o);$("ov").classList.toggle("open",!!o)};
+const VER=5,menu=o=>{$("drawer").classList.toggle("open",!!o);$("ov").classList.toggle("open",!!o)};
 setTh(localStorage.getItem("theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"));
 const key=s=>s.name+"|"+s.source;
 const db=()=>new Promise((r,j)=>{const q=indexedDB.open("spelldeck",1);q.onupgradeneeded=()=>q.result.createObjectStore("kv");q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)});
@@ -114,36 +114,36 @@ function cardHtml(s,x){return`<div class="card"><h3>${esc(s.name)}</h3><div clas
 <dl><dt>Cast</dt><dd>${esc(s.time)}</dd><dt>Range</dt><dd>${esc(s.range)}</dd><dt>Comp.</dt><dd>${esc(s.comp)}</dd><dt>Dur.</dt><dd>${esc(s.dur)}</dd></dl>
 <div class="body">${s.text}</div><div class="ft"><span>${esc(s.classes.join(", "))} · ${esc(s.source)}</span>${x?`<button data-rm="${esc(key(s))}">Remove</button>`:""}</div></div>`}
 function draw(){
- if((tab===1||tab===2)&&!cur)tab=0;save();
+ if(tab===2&&!cur)tab=1;save();
  [1,2].forEach(i=>$("t"+i).classList.toggle("on",tab===i));
- $("tabs").style.display=tab===1||tab===2?"flex":"none";
+ $("tabs").style.display=cur&&(tab===1||tab===2)?"flex":"none";
  document.querySelector(".bar").style.display=tab===1?"flex":"none";
  $("st").style.display=tab===1||tab===3?"block":"none";
- $("ttl").textContent=tab===0?"Characters":tab===3?"Settings":(cur?chars[cur].name:"Spell Deck");
- const m=$("m"),who=cur?`<p class="who">Character: <b>${esc(chars[cur].name)}</b></p>`:"";
+ $("ttl").textContent=tab===0?"Characters":tab===3?"Settings":(cur?chars[cur].name:"Spell reference");
+ const m=$("m"),who=cur?`<p class="who">Character: <b>${esc(chars[cur].name)}</b></p>`:`<p class="who">No character selected: reference only</p>`;
  if(tab===0){
-  const h=Object.entries(chars).map(([id,c])=>`<div class="row"><span class="n"><b>${esc(c.name)}</b> <small>${c.deck.length} spells${id===cur?" · selected":""}</small></span><button data-sc="${id}">Open</button><button data-rn="${id}">Rename</button><button data-del="${id}">Delete</button></div>`).join("");
-  m.innerHTML=(h||'<div class="empty">No characters yet. Add one to start building a deck.</div>')+'<p><button id="newc">+ New character</button></p>'}
+  const r=(id,name,sub,x)=>`<div class="row"><input type="radio" name="act" data-act="${id}" ${(cur||"")===id?"checked":""}><span class="n"><b>${esc(name)}</b> <small>${sub}</small></span>${x?`<button data-rn="${id}">Rename</button><button data-del="${id}">Delete</button>`:""}</div>`;
+  m.innerHTML='<p class="who">Tap the dot to choose the active character.</p>'+r("","None","reference only, no saved deck",0)+Object.entries(chars).map(([id,c])=>r(id,c.name,c.deck.length+" spells",1)).join("")+'<p><button id="newc">+ New character</button></p>'}
  else if(tab===3){m.innerHTML=`<div class="row"><span class="n">Night mode</span><input type="checkbox" id="nm" ${document.documentElement.dataset.theme==="dark"?"checked":""}></div><div class="row"><span class="n">Spell data <small>${spells.length} spells</small></span><button id="upd">Update spells</button></div><p class="who">App version ${VER}</p>`}
  else if(tab===1){const a=list(),lv=$("sort").value==="lvl";let last=null,h=who;
   a.forEach(s=>{if(lv&&s.level!==last){last=s.level;h+=`<h3 class="hi">${lvlName(s.level)}</h3>`}
-   const k=key(s);h+=`<div class="row"><input type="checkbox" data-k="${esc(k)}" ${sel.has(k)?"checked":""}><span class="n">${esc(s.name)} <small>${s.level?"L"+s.level:"Cantrip"} · ${esc(s.school)} · ${esc(s.source)}</small></span><button class="v" data-v="${esc(k)}">${open.has(k)?"Hide":"View"}</button></div>`+(open.has(k)?`<div style="padding:8px 0">${cardHtml(s)}</div>`:"")});
+   const k=key(s);h+=`<div class="row">${cur?`<input type="checkbox" data-k="${esc(k)}" ${sel.has(k)?"checked":""}>`:""}<span class="n">${esc(s.name)} <small>${s.level?"L"+s.level:"Cantrip"} · ${esc(s.school)} · ${esc(s.source)}</small></span><button class="v" data-v="${esc(k)}">${open.has(k)?"Hide":"View"}</button></div>`+(open.has(k)?`<div style="padding:8px 0">${cardHtml(s)}</div>`:"")});
   m.innerHTML=h+(a.length?"":'<div class="empty">'+(spells.length?"No matches.":"Loading spells…")+"</div>")}
  else{const a=spells.filter(s=>sel.has(key(s))).sort((x,y)=>x.level-y.level||x.name.localeCompare(y.name));
   if(!a.length){m.innerHTML=who+'<div class="empty">Deck is empty. Pick spells on the Spells tab.</div>';return}
   const by={};a.forEach(s=>(by[s.level]=by[s.level]||[]).push(s));
   m.innerHTML=who+Object.keys(by).map(l=>`<h3 class="hi">${lvlName(+l)} (${by[l].length})</h3><div class="rail">${by[l].map(s=>cardHtml(s,1)).join("")}</div>`).join("")}}
 document.addEventListener("click",e=>{const t=e.target,d=t.dataset;
- if(t.id==="mb")menu(1);else if(t.id==="ov")menu(0);else if(d.go!==undefined){tab=+d.go;menu(0);draw();scrollTo(0,0)}else if(t.id==="t1"){tab=1;draw()}else if(t.id==="t2"){tab=2;draw()}
+ if(t.id==="mb")menu(1);else if(t.id==="ov")menu(0);else if(d.go!==undefined){tab=d.go==="s"?(cur?2:1):+d.go;menu(0);draw();scrollTo(0,0)}else if(t.id==="t1"){tab=1;draw()}else if(t.id==="t2"){tab=2;draw()}
  else if(t.id==="upd")init(true);
 
- else if(t.id==="newc"){const n=prompt("Character name?");if(n&&n.trim()){const id="c"+Date.now();chars[id]={name:n.trim(),deck:[]};setCur(id);tab=1;draw()}}
- else if(d.sc){setCur(d.sc);tab=sel.size?2:1;draw()}
+ else if(t.id==="newc"){const n=prompt("Character name?");if(n&&n.trim()){const id="c"+Date.now();chars[id]={name:n.trim(),deck:[]};save();setCur(id);draw()}}
+
  else if(d.rn){const n=prompt("Rename character",chars[d.rn].name);if(n&&n.trim()){chars[d.rn].name=n.trim();draw()}}
  else if(d.del){if(confirm("Delete "+chars[d.del].name+" and their deck?")){delete chars[d.del];if(cur===d.del){cur=null;sel=new Set()}draw()}}
  else if(d.v){open.has(d.v)?open.delete(d.v):open.add(d.v);const y=scrollY;draw();scrollTo(0,y)}
  else if(d.rm){sel.delete(d.rm);draw()}});
-document.addEventListener("change",e=>{const t=e.target;if(t.dataset.k){t.checked?sel.add(t.dataset.k):sel.delete(t.dataset.k);save()}else if(t.id==="nm")setTh(t.checked?"dark":"light");else if(t.id==="sort"||t.id==="cls")draw()});
+document.addEventListener("change",e=>{const t=e.target;if(t.dataset.act!==undefined){save();if(t.dataset.act)setCur(t.dataset.act);else{cur=null;sel=new Set()}draw()}else if(t.dataset.k){t.checked?sel.add(t.dataset.k):sel.delete(t.dataset.k);save()}else if(t.id==="nm")setTh(t.checked?"dark":"light");else if(t.id==="sort"||t.id==="cls")draw()});
 $("q").addEventListener("input",draw);
 $("cnt").textContent=sel.size;init();
 if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
