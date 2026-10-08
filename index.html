@@ -59,11 +59,13 @@ details{margin:8px 0;border:1px solid var(--bd);border-radius:10px;padding:2px 1
 const BASE="https://raw.githubusercontent.com/5etools-mirror-3/5etools-src/main/data/";
 const SCH={A:"Abjuration",C:"Conjuration",D:"Divination",E:"Enchantment",V:"Evocation",I:"Illusion",N:"Necromancy",T:"Transmutation"};
 const SZ={T:"Tiny",S:"Small",M:"Medium",L:"Large",H:"Huge",G:"Gargantuan",V:"Varies"};
+const SRC=["PHB","DMG","EEPC","SCAG","VGM","MTF","GGR","ERLW","AI","TCE","MOT","EGW","SCC","VRGR","WBtW","AAG","FTD","MPMM","DSotDQ","XPHB","EFA","LFL"];
 const CAT={G:"General",O:"Origin",FS:"Fighting Style","FS:P":"Fighting Style (Paladin)","FS:R":"Fighting Style (Ranger)",EB:"Epic Boon",D:"Dragonmark",DG:"Dark Gift"};
 const PAGES={chars:"Characters",spells:"Spells",feats:"Feats",species:"Species",class:"Class",settings:"Settings"};
 const $=s=>document.getElementById(s);
-const DV=3,VER=6;
-let D={spells:[],feats:[],species:[],classes:[]},page="spells",sub={},open=new Set(),og=new Set(),cg=new Set();
+const DV=4,VER=7;
+let D={spells:[],feats:[],species:[],classes:[]},page=localStorage.getItem("page")||"spells",sub=JSON.parse(localStorage.getItem("sub")||"{}"),open=new Set(),og=new Set(),cg=new Set();
+if(!PAGES[page])page="spells";
 let chars=JSON.parse(localStorage.getItem("chars")||"null"),cur=localStorage.getItem("cur"),sel=new Set(),fsel=new Set();
 if(!chars){chars={};const old=JSON.parse(localStorage.getItem("deck")||"[]");if(old.length){chars.c0={name:"My Character",deck:old};cur="c0"}}
 function fix(c){c.deck=c.deck||[];c.feats=c.feats||[];c.species=c.species||"";c.classes=c.classes||{};c.subs=c.subs||{}}
@@ -82,14 +84,22 @@ const db=()=>new Promise((r,j)=>{const q=indexedDB.open("spelldeck",1);q.onupgra
 async function idb(mode,fn){const d=await db();return new Promise((r,j)=>{const t=d.transaction("kv",mode),q=fn(t.objectStore("kv"));t.oncomplete=()=>r(q&&q.result);t.onerror=()=>j(t.error)})}
 const get=k=>idb("readonly",s=>s.get(k)),put=(k,v)=>idb("readwrite",s=>s.put(v,k));
 const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
-function clean(t){return String(t).replace(/\{@h\}/g,"Hit: ").replace(/\{@(\w+)\s*([^}]*)\}/g,(_,tag,a)=>{const p=a.split("|");
- if(tag==="scaledamage"||tag==="scaledice")return p[3]||p[2]||p[0];
- if(tag==="dice")return p[1]||p[0];
- if(tag==="damage")return p[0];
- if(tag==="dc")return"DC "+p[0];
- if(tag==="hit")return(+p[0]>=0?"+":"")+p[0];
- if(tag==="atk")return({ms:"Melee Spell Attack:",rs:"Ranged Spell Attack:",mw:"Melee Weapon Attack:",rw:"Ranged Weapon Attack:"})[p[0]]||"Attack:";
- return p[2]||p[0]})}
+function clean(t){let s=String(t).replace(/\{@h\}/g,"Hit: "),prev;
+ const f=(_,tag,a)=>{const p=a.split("|");
+  if(/^(i|b|bold|italic|note|u|s|strike|underline|sup|sub|small|code|color|font)$/.test(tag))return a;
+  if(tag==="scaledamage"||tag==="scaledice")return p[3]||p[2]||p[0];
+  if(tag==="dice")return p[1]||p[0];
+  if(tag==="damage")return p[0];
+  if(tag==="dc")return"DC "+p[0];
+  if(tag==="hit")return(+p[0]>=0?"+":"")+p[0];
+  if(tag==="atk")return({ms:"Melee Spell Attack:",rs:"Ranged Spell Attack:",mw:"Melee Weapon Attack:",rw:"Ranged Weapon Attack:"})[p[0]]||"Attack:";
+  if(tag==="filter"||tag==="book"||tag==="link"||tag==="footnote"||tag==="5etools")return p[0];
+  if(tag==="quickref")return p[4]||p[0];
+  if(tag==="classFeature")return p[5]||p[0];
+  if(tag==="subclassFeature")return p[7]||p[0];
+  if(tag==="subclass")return p[4]||p[0];
+  return p[2]||p[0]};
+ do{prev=s;s=s.replace(/\{@(\w+)\s*([^{}]*)\}/g,f)}while(s!==prev);return s}
 const strip=h=>h.replace(/<\/?p>/g," ");
 function render(e){if(e==null)return"";if(typeof e==="string")return"<p>"+esc(clean(e))+"</p>";
 if(Array.isArray(e))return e.map(render).join("");
@@ -136,7 +146,9 @@ function procSpecies(d){const all=d.race||[],subs=d.subrace||[],out=[];
  subs.forEach(s0=>{const s=res(s0,fs);if(s.reprintedAs||!s.name)return;const b0=all.find(x=>x.name===s.raceName&&x.source===s.raceSource);if(!b0)return;const b=res(b0,fr);
   const ow=new Set((s.entries||[]).map(e=>e&&e.data&&e.data.overwrite).filter(Boolean));
   mk(b.name+" ("+s.name+")",s.source,s.size||b.size,s.speed||b.speed,(b.entries||[]).filter(e=>!(e&&e.name&&ow.has(e.name))).concat(s.entries||[]))});
- return out.sort((a,b)=>a.name.localeCompare(b.name))}
+ const rk=x=>{const i=SRC.indexOf(x);return i<0?4:i},best={};
+ out.forEach(p=>{const b=best[p.name];if(!b||rk(p.source)>rk(b.source))best[p.name]=p});
+ return Object.values(best).sort((a,b)=>a.name.localeCompare(b.name))}
 function expand(e,look,d){d=d||0;if(Array.isArray(e))return e.map(x=>expand(x,look,d));if(!e||typeof e!=="object"||d>4)return e;
  if(e.type==="refSubclassFeature"||e.type==="refClassFeature"){const sc=e.type==="refSubclassFeature",p=(sc?e.subclassFeature:e.classFeature).split("|");
   const x=sc?look.sf[[p[0],p[1],p[2]||"PHB",p[3],p[4]||"PHB",p[5]].join("|").toLowerCase()]:look.cf[[p[0],p[1],p[2]||"PHB",p[3]].join("|").toLowerCase()];
@@ -184,7 +196,7 @@ function ui(){
  let cur1=$("cls").value;$("cls").innerHTML='<option value="">All classes</option>'+[...cs].sort().map(c=>`<option>${esc(c)}</option>`).join("");$("cls").value=cur1;
  const ct=new Set(D.feats.map(f=>f.cat));cur1=$("cat").value;$("cat").innerHTML='<option value="">All categories</option>'+[...ct].sort().map(c=>`<option>${esc(c)}</option>`).join("");$("cat").value=cur1;
  draw()}
-function save(){const c=C();if(c){c.deck=[...sel];c.feats=[...fsel]}localStorage.setItem("chars",JSON.stringify(chars));cur?localStorage.setItem("cur",cur):localStorage.removeItem("cur")}
+function save(){localStorage.setItem("page",page);localStorage.setItem("sub",JSON.stringify(sub));const c=C();if(c){c.deck=[...sel];c.feats=[...fsel]}localStorage.setItem("chars",JSON.stringify(chars));cur?localStorage.setItem("cur",cur):localStorage.removeItem("cur")}
 const empty=t=>`<div class="empty">${t}</div>`;
 const who=()=>cur?`<p class="who">Character: <b>${esc(chars[cur].name)}</b></p>`:`<p class="who">No character selected: reference only</p>`;
 const q=()=>$("q").value.toLowerCase().trim();
