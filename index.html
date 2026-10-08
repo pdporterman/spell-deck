@@ -10,59 +10,78 @@
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" href="icons/icon-192.png">
 <style>
-:root{--bg:#f4efe6;--fg:#2b2118;--card:#fffaf0;--ac:#7a1f1f;--mut:#8a7b68;--bd:#d8cbb4}
-:root[data-theme=dark]{color-scheme:dark;--bg:#14110e;--fg:#eee4d2;--card:#241e18;--ac:#e07a68;--mut:#a89983;--bd:#3d342a}
+:root{--bg:#f4efe6;--fg:#2b2118;--card:#fffaf0;--ac:#7a1f1f;--ac2:#2f6b8a;--mut:#8a7b68;--bd:#d8cbb4}
+:root[data-theme=dark]{color-scheme:dark;--bg:#14110e;--fg:#eee4d2;--card:#241e18;--ac:#e07a68;--ac2:#6fb0d0;--mut:#a89983;--bd:#3d342a}
 *{box-sizing:border-box}body{margin:0;font:16px Georgia,serif;background:var(--bg);color:var(--fg)}
 header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--bd);padding:8px 12px;z-index:5}
 .tabs{display:flex;gap:8px;margin-bottom:8px}
 button,select,input{font:inherit;color:inherit;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:7px 10px}
-.tab{flex:1;font-weight:bold}.tab.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+button:disabled{opacity:.35}
+.tab{flex:1;font-weight:bold;padding:7px 4px}.tab.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 .bar{display:flex;gap:6px;flex-wrap:wrap}.bar input{flex:1;min-width:120px}
 #st{font-size:12px;color:var(--mut);margin-top:6px}
 main{padding:10px 12px 60px;max-width:1100px;margin:auto}
 .row{flex-wrap:wrap;display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--bd)}
-.row input{width:20px;height:20px;accent-color:var(--ac)}.row .n{flex:1}.row small{color:var(--mut)}
+.row input{width:20px;height:20px;accent-color:var(--ac);padding:0}.row .n{flex:1}.row small{color:var(--mut)}
+.row b{min-width:22px;text-align:center}
 .row .v{background:none;border:none;color:var(--ac);padding:4px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 14px;margin-bottom:6px}.rail .card{scroll-snap-align:start}
 .card{background:var(--card);border:2px solid var(--ac);border-radius:12px;padding:12px;display:flex;flex-direction:column;width:300px;height:480px;flex:none;max-width:100%}
+.card.sub{border-color:var(--ac2)}.card.sub h3{color:var(--ac2)}
 .card h3{margin:0;color:var(--ac)}.card .meta{font-style:italic;color:var(--mut);font-size:13px;margin-bottom:6px}
 .card dl{margin:0 0 6px;font-size:13px;display:grid;grid-template-columns:auto 1fr;gap:1px 8px;border-block:1px solid var(--bd);padding:5px 0}
 .card dt{font-weight:bold}.card dd{margin:0}
 .body{min-height:0;overflow:auto;font-size:14px;flex:1}.body p{margin:0 0 6px}
 .card .ft{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mut);margin-top:6px;gap:6px}
-.rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 14px;margin-bottom:6px}.rail .card{scroll-snap-align:start}.who{color:var(--mut);margin:2px 0 8px}
-.top{display:flex;align-items:center;gap:10px;margin-bottom:8px}.top b{font-size:18px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#mb{font-size:20px;padding:4px 12px}#ov{position:fixed;inset:0;background:#0006;z-index:9;display:none}#ov.open{display:block}#drawer{position:fixed;top:0;bottom:0;left:0;width:260px;max-width:80%;background:var(--bg);border-right:1px solid var(--bd);z-index:10;padding:16px 12px;transform:translateX(-105%);transition:transform .2s;display:flex;flex-direction:column;gap:8px}#drawer.open{transform:none}#drawer button{text-align:left;font-size:17px;padding:12px}#drawer h2{margin:0 0 6px;color:var(--ac)}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:8px}.top b{font-size:18px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#mb{font-size:20px;padding:4px 12px}
+#ov{position:fixed;inset:0;background:#0006;z-index:9;display:none}#ov.open{display:block}
+#drawer{position:fixed;top:0;bottom:0;left:0;width:260px;max-width:80%;background:var(--bg);border-right:1px solid var(--bd);z-index:10;padding:16px 12px;transform:translateX(-105%);transition:transform .2s;display:flex;flex-direction:column;gap:8px}
+#drawer.open{transform:none}#drawer button{text-align:left;font-size:17px;padding:12px}#drawer h2{margin:0 0 6px;color:var(--ac)}
+details{margin:8px 0;border:1px solid var(--bd);border-radius:10px;padding:2px 10px}summary{cursor:pointer;padding:8px 0}
 .empty{text-align:center;color:var(--mut);padding:40px 10px}
+.who{color:var(--mut);margin:2px 0 8px}
 .hi{color:var(--ac)}
 </style></head><body>
 <header>
-<div class="top"><button id="mb" aria-label="Menu">☰</button><b id="ttl">Spell Deck</b></div>
-<div class="tabs" id="tabs"><button class="tab" id="t1">Spells</button><button class="tab" id="t2">Deck (<span id="cnt">0</span>)</button></div>
+<div class="top"><button id="mb" aria-label="Menu">☰</button><b id="ttl">Spells</b></div>
+<div class="tabs" id="tabs"></div>
 <div class="bar">
 <input id="q" type="search" placeholder="Search…">
 <select id="sort"><option value="az">A–Z</option><option value="lvl">Level</option></select>
-<select id="cls"><option value="">All classes</option></select></div>
+<select id="cls"><option value="">All classes</option></select>
+<select id="cat"><option value="">All categories</option></select></div>
 <div id="st">Loading…</div>
 </header>
 <div id="ov"></div>
-<nav id="drawer"><h2>Spell Deck</h2><button data-go="0">Characters</button><button data-go="s">Spells</button><button data-go="3">Settings</button></nav>
+<nav id="drawer"><h2>Spell Deck</h2><button data-go="chars">Characters</button><button data-go="spells">Spells</button><button data-go="feats">Feats</button><button data-go="species">Species</button><button data-go="class">Class</button><button data-go="settings">Settings</button></nav>
 <main id="m"></main>
 <script>
 const BASE="https://raw.githubusercontent.com/5etools-mirror-3/5etools-src/main/data/";
 const SCH={A:"Abjuration",C:"Conjuration",D:"Divination",E:"Enchantment",V:"Evocation",I:"Illusion",N:"Necromancy",T:"Transmutation"};
+const SZ={T:"Tiny",S:"Small",M:"Medium",L:"Large",H:"Huge",G:"Gargantuan",V:"Varies"};
+const CAT={G:"General",O:"Origin",FS:"Fighting Style","FS:P":"Fighting Style (Paladin)","FS:R":"Fighting Style (Ranger)",EB:"Epic Boon",D:"Dragonmark",DG:"Dark Gift"};
+const PAGES={chars:"Characters",spells:"Spells",feats:"Feats",species:"Species",class:"Class",settings:"Settings"};
 const $=s=>document.getElementById(s);
-let spells=[],tab=0,open=new Set(),chars=JSON.parse(localStorage.getItem("chars")||"null"),cur=localStorage.getItem("cur"),sel=new Set();
+const DV=3,VER=6;
+let D={spells:[],feats:[],species:[],classes:[]},page="spells",sub={},open=new Set(),og=new Set(),cg=new Set();
+let chars=JSON.parse(localStorage.getItem("chars")||"null"),cur=localStorage.getItem("cur"),sel=new Set(),fsel=new Set();
 if(!chars){chars={};const old=JSON.parse(localStorage.getItem("deck")||"[]");if(old.length){chars.c0={name:"My Character",deck:old};cur="c0"}}
-if(!chars[cur])cur=null;if(cur)sel=new Set(chars[cur].deck);tab=cur?2:1;
-function setCur(id){cur=id;sel=new Set(chars[id].deck);localStorage.setItem("cur",id)}
+function fix(c){c.deck=c.deck||[];c.feats=c.feats||[];c.species=c.species||"";c.classes=c.classes||{};c.subs=c.subs||{}}
+Object.values(chars).forEach(fix);
+if(!chars[cur])cur=null;
+const C=()=>cur?chars[cur]:null;
+function setCur(id){cur=id;const c=chars[id];sel=new Set(c.deck);fsel=new Set(c.feats);localStorage.setItem("cur",id)}
+function noCur(){cur=null;sel=new Set();fsel=new Set()}
+if(cur)setCur(cur);
 function setTh(t){document.documentElement.dataset.theme=t;localStorage.setItem("theme",t);if($("nm"))$("nm").checked=t==="dark"}
-const VER=5,menu=o=>{$("drawer").classList.toggle("open",!!o);$("ov").classList.toggle("open",!!o)};
+const menu=o=>{$("drawer").classList.toggle("open",!!o);$("ov").classList.toggle("open",!!o)};
 setTh(localStorage.getItem("theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"));
-const key=s=>s.name+"|"+s.source;
+const key=s=>s.name+"|"+s.source,ckey=k=>k.name+"|"+k.source;
+const total=c=>Object.values(c.classes).reduce((a,b)=>a+b,0);
 const db=()=>new Promise((r,j)=>{const q=indexedDB.open("spelldeck",1);q.onupgradeneeded=()=>q.result.createObjectStore("kv");q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)});
 async function idb(mode,fn){const d=await db();return new Promise((r,j)=>{const t=d.transaction("kv",mode),q=fn(t.objectStore("kv"));t.oncomplete=()=>r(q&&q.result);t.onerror=()=>j(t.error)})}
 const get=k=>idb("readonly",s=>s.get(k)),put=(k,v)=>idb("readwrite",s=>s.put(v,k));
-const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 function clean(t){return String(t).replace(/\{@h\}/g,"Hit: ").replace(/\{@(\w+)\s*([^}]*)\}/g,(_,tag,a)=>{const p=a.split("|");
  if(tag==="scaledamage"||tag==="scaledice")return p[3]||p[2]||p[0];
  if(tag==="dice")return p[1]||p[0];
@@ -79,6 +98,7 @@ if(e.type==="table")return(e.caption?"<p><i>"+esc(clean(e.caption))+"</i></p>":"
 return(e.name?"<p><b>"+esc(clean(e.name))+".</b></p>":"")+render(e.entries||e.entry||"")}
 const ordl=l=>l===0?"Cantrip":l+(["st","nd","rd"][l-1]||"th")+"-level";
 const lvlName=l=>l===0?"Cantrips":"Level "+l;
+// ---------- data processing ----------
 function slim(s,lookup){
  const cl=new Set(),lk=lookup&&lookup[s.source.toLowerCase()]?.[s.name.toLowerCase()];
  for(const f of["class","classVariant"])if(lk?.[f])Object.values(lk[f]).forEach(o=>Object.keys(o).forEach(c=>cl.add(c)));
@@ -88,63 +108,197 @@ function slim(s,lookup){
  const dur=!d?"":d.type==="instant"?"Instantaneous":d.type==="timed"?(d.concentration?"Concentration, up to ":"")+d.duration.amount+" "+d.duration.type+(d.duration.amount>1?"s":""):d.type==="permanent"?"Until dispelled":"Special";
  const comp=[c.v&&"V",c.s&&"S",c.m&&"M ("+clean(typeof c.m==="string"?c.m:c.m.text||"")+")"].filter(Boolean).join(", ");
  return{name:s.name,source:s.source,level:s.level,school:SCH[s.school]||s.school||"",time:t?t.number+" "+t.unit:"",range,comp,dur,ritual:!!s.meta?.ritual,classes:[...cl].sort(),text:render(s.entries)+(s.entriesHigherLevel?render(s.entriesHigherLevel):"")}}
+function prereq(p){if(!p)return"";return p.map(o=>{const a=[];
+ if(o.level)a.push("Level "+(o.level.level||o.level)+(o.level.class?" "+o.level.class.name:"")+"+");
+ if(o.ability)a.push(o.ability.map(x=>Object.entries(x).map(([k,v])=>k.toUpperCase()+" "+v).join(" or ")).join(", "));
+ if(o.race)a.push(o.race.map(r=>r.name).join(" or "));
+ if(o.spellcasting||o.spellcasting2020)a.push("Spellcasting");
+ if(o.feat)a.push(o.feat.map(x=>x.split("|")[0]).join(" or "));
+ if(o.other)a.push(o.other);
+ return a.join(", ")}).filter(Boolean).join("; ")}
+function procFeats(d){return(d.feat||[]).filter(f=>!f.reprintedAs&&f.entries).map(f=>({key:f.name+"|"+f.source,name:f.name,source:f.source,cat:CAT[f.category]||"Feat",pre:prereq(f.prerequisite),text:render(f.entries)}))}
+const fmtSize=s=>(Array.isArray(s)?s:[s]).filter(Boolean).map(x=>SZ[x]||x).join(" or ");
+const fmtSpeed=s=>{if(s==null)return"";if(typeof s==="number")return s+" ft.";const w=s.walk&&(typeof s.walk==="number"?s.walk:s.walk.number);return Object.entries(s).map(([k,v])=>{const n=v===true?w:typeof v==="number"?v:v&&v.number;return n?k+" "+n+" ft.":""}).filter(Boolean).join(", ")};
+function modEntries(ents,mods){if(!mods)return ents;ents=ents.slice();for(const m of[].concat(mods)){const it=m.items==null?[]:[].concat(m.items);
+ if(m.mode==="appendArr")ents.push(...it);else if(m.mode==="prependArr")ents.unshift(...it);
+ else if(m.mode==="insertArr")ents.splice(m.index??ents.length,0,...it);
+ else if(m.mode==="replaceArr"){const i=ents.findIndex(e=>(e&&e.name)===m.replace||e===m.replace);if(i>=0)ents.splice(i,1,...it);else ents.push(...it)}
+ else if(m.mode==="removeArr"){const n=[].concat(m.names||m.items||[]);ents=ents.filter(e=>!n.includes(e&&e.name||e))}}
+ return ents}
+function res(r,find,d=0){if(!r._copy||d>5)return r;const b=find(r._copy);if(!b)return r;const base=res(b,find,d+1);
+ const o={...base,...r};delete o._copy;o.reprintedAs=r.reprintedAs;o.entries=r.entries||modEntries(base.entries||[],r._copy._mod&&r._copy._mod.entries);return o}
+function procSpecies(d){const all=d.race||[],subs=d.subrace||[],out=[];
+ const fr=c=>all.find(x=>x.name===c.name&&x.source===c.source),fs=c=>subs.find(x=>x.name===c.name&&x.source===c.source&&(!c.raceName||x.raceName===c.raceName));
+ const mk=(name,source,size,speed,ents)=>{const notes=[],traits=[];
+  (ents||[]).forEach(e=>{if(e&&typeof e==="object"&&e.name)traits.push({name:e.name,text:render(e.entries||e.entry||"")});else notes.push(render(e))});
+  if(traits.length||notes.length)out.push({key:name+"|"+source,name,source,size:fmtSize(size),speed:fmtSpeed(speed),notes:notes.join(""),traits})};
+ all.forEach(r0=>{const r=res(r0,fr);if(r.reprintedAs||!r.entries)return;mk(r.name,r.source,r.size,r.speed,r.entries)});
+ subs.forEach(s0=>{const s=res(s0,fs);if(s.reprintedAs||!s.name)return;const b0=all.find(x=>x.name===s.raceName&&x.source===s.raceSource);if(!b0)return;const b=res(b0,fr);
+  const ow=new Set((s.entries||[]).map(e=>e&&e.data&&e.data.overwrite).filter(Boolean));
+  mk(b.name+" ("+s.name+")",s.source,s.size||b.size,s.speed||b.speed,(b.entries||[]).filter(e=>!(e&&e.name&&ow.has(e.name))).concat(s.entries||[]))});
+ return out.sort((a,b)=>a.name.localeCompare(b.name))}
+function expand(e,look,d){d=d||0;if(Array.isArray(e))return e.map(x=>expand(x,look,d));if(!e||typeof e!=="object"||d>4)return e;
+ if(e.type==="refSubclassFeature"||e.type==="refClassFeature"){const sc=e.type==="refSubclassFeature",p=(sc?e.subclassFeature:e.classFeature).split("|");
+  const x=sc?look.sf[[p[0],p[1],p[2]||"PHB",p[3],p[4]||"PHB",p[5]].join("|").toLowerCase()]:look.cf[[p[0],p[1],p[2]||"PHB",p[3]].join("|").toLowerCase()];
+  return x?{type:"entries",name:x.name,entries:expand(x.entries,look,d+1)}:null}
+ const o={...e};if(o.entries)o.entries=expand(o.entries,look,d+1);if(o.entry)o.entry=expand(o.entry,look,d+1);if(o.items)o.items=expand(o.items,look,d+1);return o}
+function procClasses(files){const out=[];
+ for(const f of files){const cfm={},sfm={},look={cf:cfm,sf:sfm};
+  (f.classFeature||[]).forEach(x=>{cfm[[x.name,x.className,x.classSource,x.level].join("|").toLowerCase()]=x});
+  (f.subclassFeature||[]).forEach(x=>{sfm[[x.name,x.className,x.classSource,x.subclassShortName,x.subclassSource,x.level].join("|").toLowerCase()]=x});
+  for(const c of f.class||[]){if(c.reprintedAs||c.isSidekick||/^UA/.test(c.source))continue;
+   const feats=[];(c.classFeatures||[]).forEach(r=>{const p=(typeof r==="string"?r:r.classFeature).split("|");
+    const x=cfm[[p[0],p[1],p[2]||"PHB",p[3]].join("|").toLowerCase()];if(x)feats.push({name:x.name,level:x.level,text:render(expand(x.entries,look))})});
+   const subs=(f.subclass||[]).filter(s=>s.className===c.name&&s.classSource===c.source&&!s.reprintedAs&&!/^UA/.test(s.source)).map(s=>{const sf=[];
+    (s.subclassFeatures||(s._copy&&((f.subclass||[]).find(b=>b!==s&&b.name===s._copy.name&&b.source===s._copy.source&&b.className===s._copy.className&&(!s._copy.classSource||b.classSource===s._copy.classSource)&&b.subclassFeatures)||{}).subclassFeatures)||[]).forEach(ref=>{const p=ref.split("|");const x=sfm[[p[0],p[1],p[2]||"PHB",p[3],p[4]||"PHB",p[5]].join("|").toLowerCase()];if(x)sf.push({name:x.name,level:x.level,text:render(expand(x.entries,look))})});
+    return{name:s.name,short:s.shortName,source:s.source,features:sf}}).filter((s,i,a)=>s.source==="XPHB"||!a.some(o=>o.name===s.name&&o.source==="XPHB")).sort((a,b)=>a.name.localeCompare(b.name));
+   out.push({name:c.name,source:c.source,features:feats,subs})}}
+ return out.sort((a,b)=>a.name.localeCompare(b.name))}
 async function fetchAll(){
- $("st").textContent="Downloading spells from 5etools…";
+ $("st").textContent="Downloading from 5etools…";
  const j=u=>fetch(BASE+u).then(r=>{if(!r.ok)throw Error(u);return r.json()});
- const idx=await j("spells/index.json");
- let lookup=null;try{lookup=await j("generated/gendata-spell-source-lookup.json")}catch(e){}
- const files=await Promise.all(Object.values(idx).map(f=>j("spells/"+f).catch(()=>({spell:[]}))));
- const out=[];files.forEach(f=>(f.spell||[]).forEach(s=>{if(!s.reprintedAs)out.push(slim(s,lookup))}));
- await put("spells",out);await put("ver",2);await put("when",Date.now());return out}
+ const jobs={
+  spells:async()=>{const idx=await j("spells/index.json");let lookup=null;try{lookup=await j("generated/gendata-spell-source-lookup.json")}catch(e){}
+   const files=await Promise.all(Object.values(idx).map(f=>j("spells/"+f).catch(()=>({spell:[]}))));
+   const out=[];files.forEach(f=>(f.spell||[]).forEach(s=>{if(!s.reprintedAs)out.push(slim(s,lookup))}));return out},
+  feats:async()=>procFeats(await j("feats.json")),
+  species:async()=>procSpecies(await j("races.json")),
+  classes:async()=>{const idx=await j("class/index.json");return procClasses(await Promise.all(Object.values(idx).map(f=>j("class/"+f))))}};
+ let bad=0;
+ await Promise.all(Object.entries(jobs).map(async([k,f])=>{try{D[k]=await f();await put(k,D[k])}catch(e){bad++;console.error(k,e)}}));
+ if(bad===4)throw Error("download failed");
+ if(!bad){await put("ver",DV);await put("when",Date.now())}
+ return bad}
+const counts=()=>D.spells.length+" spells · "+D.feats.length+" feats · "+D.species.length+" species · "+D.classes.length+" classes";
 async function init(force){
- const cached=await get("spells"),when=(await get("when"))||0,ver=await get("ver");
- if(cached){spells=cached;ui();$("st").textContent=spells.length+" spells (saved copy, "+new Date(when).toLocaleDateString()+")"}
- if(force||!cached||ver!==2||Date.now()-when>864e5){
-  if(!navigator.onLine){if(!cached)$("st").textContent="Offline and no saved spells yet. Open once while online.";return}
-  try{spells=await fetchAll();$("st").textContent=spells.length+" spells — updated just now";ui()}
-  catch(e){$("st").textContent=cached?spells.length+" spells (saved copy; update failed)":"Couldn't reach 5etools: "+e.message}}}
+ let have=true;for(const k of Object.keys(D)){const v=await get(k);if(v)D[k]=v;else have=false}
+ const when=(await get("when"))||0,ver=await get("ver");
+ if(D.spells.length){ui();$("st").textContent=counts()+" (saved copy, "+new Date(when).toLocaleDateString()+")"}
+ if(force||!have||ver!==DV||Date.now()-when>864e5){
+  if(!navigator.onLine){if(!have)$("st").textContent="Offline and nothing saved yet. Open once while online.";return}
+  try{const bad=await fetchAll();ui();$("st").textContent=counts()+(bad?" (some parts failed to update)":" — updated just now")}
+  catch(e){$("st").textContent=have?counts()+" (saved copy; update failed)":"Couldn't reach 5etools: "+e.message}}}
+// ---------- UI ----------
 function ui(){
- const cs=new Set();spells.forEach(s=>s.classes.forEach(c=>cs.add(c)));
- const cur=$("cls").value;$("cls").innerHTML='<option value="">All classes</option>'+[...cs].sort().map(c=>`<option>${c}</option>`).join("");$("cls").value=cur;draw()}
-function save(){if(cur&&chars[cur])chars[cur].deck=[...sel];localStorage.setItem("chars",JSON.stringify(chars));cur?localStorage.setItem("cur",cur):localStorage.removeItem("cur");$("cnt").textContent=sel.size}
-function list(){const q=$("q").value.toLowerCase(),c=$("cls").value;
- const a=spells.filter(s=>(!c||s.classes.includes(c))&&s.name.toLowerCase().includes(q));
- return a.sort($("sort").value==="lvl"?(x,y)=>x.level-y.level||x.name.localeCompare(y.name):(x,y)=>x.name.localeCompare(y.name))}
-function cardHtml(s,x){return`<div class="card"><h3>${esc(s.name)}</h3><div class="meta">${ordl(s.level)} ${esc(s.school.toLowerCase())}${s.ritual?" (ritual)":""}</div>
-<dl><dt>Cast</dt><dd>${esc(s.time)}</dd><dt>Range</dt><dd>${esc(s.range)}</dd><dt>Comp.</dt><dd>${esc(s.comp)}</dd><dt>Dur.</dt><dd>${esc(s.dur)}</dd></dl>
-<div class="body">${s.text}</div><div class="ft"><span>${esc(s.classes.join(", "))} · ${esc(s.source)}</span>${x?`<button data-rm="${esc(key(s))}">Remove</button>`:""}</div></div>`}
-function draw(){
- if(tab===2&&!cur)tab=1;save();
- [1,2].forEach(i=>$("t"+i).classList.toggle("on",tab===i));
- $("tabs").style.display=cur&&(tab===1||tab===2)?"flex":"none";
- document.querySelector(".bar").style.display=tab===1?"flex":"none";
- $("st").style.display=tab===1||tab===3?"block":"none";
- $("ttl").textContent=tab===0?"Characters":tab===3?"Settings":(cur?chars[cur].name:"Spell reference");
- const m=$("m"),who=cur?`<p class="who">Character: <b>${esc(chars[cur].name)}</b></p>`:`<p class="who">No character selected: reference only</p>`;
- if(tab===0){
-  const r=(id,name,sub,x)=>`<div class="row"><input type="radio" name="act" data-act="${id}" ${(cur||"")===id?"checked":""}><span class="n"><b>${esc(name)}</b> <small>${sub}</small></span>${x?`<button data-rn="${id}">Rename</button><button data-del="${id}">Delete</button>`:""}</div>`;
-  m.innerHTML='<p class="who">Tap the dot to choose the active character.</p>'+r("","None","reference only, no saved deck",0)+Object.entries(chars).map(([id,c])=>r(id,c.name,c.deck.length+" spells",1)).join("")+'<p><button id="newc">+ New character</button></p>'}
- else if(tab===3){m.innerHTML=`<div class="row"><span class="n">Night mode</span><input type="checkbox" id="nm" ${document.documentElement.dataset.theme==="dark"?"checked":""}></div><div class="row"><span class="n">Spell data <small>${spells.length} spells</small></span><button id="upd">Update spells</button></div><p class="who">App version ${VER}</p>`}
- else if(tab===1){const a=list(),lv=$("sort").value==="lvl";let last=null,h=who;
-  a.forEach(s=>{if(lv&&s.level!==last){last=s.level;h+=`<h3 class="hi">${lvlName(s.level)}</h3>`}
-   const k=key(s);h+=`<div class="row">${cur?`<input type="checkbox" data-k="${esc(k)}" ${sel.has(k)?"checked":""}>`:""}<span class="n">${esc(s.name)} <small>${s.level?"L"+s.level:"Cantrip"} · ${esc(s.school)} · ${esc(s.source)}</small></span><button class="v" data-v="${esc(k)}">${open.has(k)?"Hide":"View"}</button></div>`+(open.has(k)?`<div style="padding:8px 0">${cardHtml(s)}</div>`:"")});
-  m.innerHTML=h+(a.length?"":'<div class="empty">'+(spells.length?"No matches.":"Loading spells…")+"</div>")}
- else{const a=spells.filter(s=>sel.has(key(s))).sort((x,y)=>x.level-y.level||x.name.localeCompare(y.name));
-  if(!a.length){m.innerHTML=who+'<div class="empty">Deck is empty. Pick spells on the Spells tab.</div>';return}
-  const by={};a.forEach(s=>(by[s.level]=by[s.level]||[]).push(s));
-  m.innerHTML=who+Object.keys(by).map(l=>`<h3 class="hi">${lvlName(+l)} (${by[l].length})</h3><div class="rail">${by[l].map(s=>cardHtml(s,1)).join("")}</div>`).join("")}}
+ const cs=new Set();D.spells.forEach(s=>s.classes.forEach(c=>cs.add(c)));
+ let cur1=$("cls").value;$("cls").innerHTML='<option value="">All classes</option>'+[...cs].sort().map(c=>`<option>${esc(c)}</option>`).join("");$("cls").value=cur1;
+ const ct=new Set(D.feats.map(f=>f.cat));cur1=$("cat").value;$("cat").innerHTML='<option value="">All categories</option>'+[...ct].sort().map(c=>`<option>${esc(c)}</option>`).join("");$("cat").value=cur1;
+ draw()}
+function save(){const c=C();if(c){c.deck=[...sel];c.feats=[...fsel]}localStorage.setItem("chars",JSON.stringify(chars));cur?localStorage.setItem("cur",cur):localStorage.removeItem("cur")}
+const empty=t=>`<div class="empty">${t}</div>`;
+const who=()=>cur?`<p class="who">Character: <b>${esc(chars[cur].name)}</b></p>`:`<p class="who">No character selected: reference only</p>`;
+const q=()=>$("q").value.toLowerCase().trim();
+const rail=a=>`<div class="rail">${a.join("")}</div>`;
+function gcard(o){return`<div class="card ${o.cls||""}"><h3>${esc(o.t)}</h3><div class="meta">${esc(o.meta||"")}</div>${o.dl&&o.dl.length?`<dl>${o.dl.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`:""}<div class="body">${o.body||""}</div><div class="ft"><span>${esc(o.foot||"")}</span>${o.btn||""}</div></div>`}
+function row(o){return`<div class="row">${o.in||""}<span class="n">${esc(o.n)} <small>${esc(o.s||"")}</small></span>${o.x||""}<button class="v" data-v="${esc(o.k)}">${open.has(o.k)?"Hide":"View"}</button></div>`+(open.has(o.k)?`<div style="padding:8px 0">${o.c()}</div>`:"")}
+const rmBtn=(a,k)=>`<button data-${a}="${esc(k)}">Remove</button>`;
+function tabsFor(){const c=C();
+ if(page==="class")return c?[["class","Class"],["sub","Subclass"],["deck","Deck"]]:[["class","Class"],["sub","Subclass"]];
+ if(!c||!["spells","feats","species"].includes(page))return[];
+ const n=page==="spells"?sel.size:page==="feats"?fsel.size:(c.species?1:0);
+ return[["list",{spells:"Spell list",feats:"Feat list",species:"Species list"}[page]],["deck","Deck ("+n+")"]]}
+function curSub(){const t=tabsFor().map(x=>x[0]);let s=sub[page];if(!t.includes(s))s=t.includes("deck")?"deck":t[0]||"list";return s}
+function draw(){save();const tabs=tabsFor(),st=curSub();
+ $("ttl").textContent=PAGES[page];
+ $("tabs").style.display=tabs.length?"flex":"none";
+ $("tabs").innerHTML=tabs.map(([k,l])=>`<button class="tab ${k===st?"on":""}" data-st="${k}">${l}</button>`).join("");
+ const lv=((page==="spells"||page==="feats"||page==="species")&&st==="list")||(page==="class"&&st==="class");
+ document.querySelector(".bar").style.display=lv?"flex":"none";
+ $("sort").style.display=$("cls").style.display=page==="spells"?"":"none";
+ $("cat").style.display=page==="feats"?"":"none";
+ $("st").style.display=lv||page==="settings"?"block":"none";
+ $("m").innerHTML=view(st)}
+function view(st){
+ if(page==="chars")return charsView();
+ if(page==="settings")return settingsView();
+ if(page==="spells")return st==="deck"?spellDeck():spellList();
+ if(page==="feats")return st==="deck"?featDeck():featList();
+ if(page==="species")return st==="deck"?speciesDeck():speciesList();
+ return st==="deck"?classDeck():st==="sub"?classSubs():classList()}
+// characters / settings
+function charsView(){
+ const r=(id,name,sub,x)=>`<div class="row"><input type="radio" name="act" data-act="${id}" ${(cur||"")===id?"checked":""}><span class="n"><b>${esc(name)}</b> <small>${esc(sub)}</small></span>${x?`<button data-rn="${id}">Rename</button><button data-del="${id}">Delete</button>`:""}</div>`;
+ return'<p class="who">Tap the dot to choose the active character.</p>'+r("","None","reference only, no saved deck",0)+Object.entries(chars).map(([id,c])=>r(id,c.name,c.deck.length+" spells · "+c.feats.length+" feats"+(total(c)?" · level "+total(c):""),1)).join("")+'<p><button id="newc">+ New character</button></p>'}
+function settingsView(){return`<div class="row"><span class="n">Night mode</span><input type="checkbox" id="nm" ${document.documentElement.dataset.theme==="dark"?"checked":""}></div><div class="row"><span class="n">5etools data <small>${counts()}</small></span><button id="upd">Update</button></div><p class="who">App version ${VER}</p>`}
+// spells
+function spellCard(s,x){return gcard({t:s.name,meta:`${ordl(s.level)} ${s.school.toLowerCase()}${s.ritual?" (ritual)":""}`,dl:[["Cast",s.time],["Range",s.range],["Comp.",s.comp],["Dur.",s.dur]],body:s.text,foot:s.classes.join(", ")+" · "+s.source,btn:x?rmBtn("rm",key(s)):""})}
+function spellList(){const c=$("cls").value,t=q(),lv=$("sort").value==="lvl";
+ const a=D.spells.filter(s=>(!c||s.classes.includes(c))&&s.name.toLowerCase().includes(t)).sort(lv?(x,y)=>x.level-y.level||x.name.localeCompare(y.name):(x,y)=>x.name.localeCompare(y.name));
+ let last=null,h=who();
+ a.forEach(s=>{if(lv&&s.level!==last){last=s.level;h+=`<h3 class="hi">${lvlName(s.level)}</h3>`}const k=key(s);
+  h+=row({k:"s:"+k,in:cur?`<input type="checkbox" data-k="${esc(k)}" ${sel.has(k)?"checked":""}>`:"",n:s.name,s:`${s.level?"L"+s.level:"Cantrip"} · ${s.school} · ${s.source}`,c:()=>spellCard(s)})});
+ return h+(a.length?"":empty(D.spells.length?"No matches.":"Loading…"))}
+function spellDeck(){const a=D.spells.filter(s=>sel.has(key(s))).sort((x,y)=>x.level-y.level||x.name.localeCompare(y.name));
+ if(!a.length)return who()+empty("Deck is empty. Pick spells on the Spell list tab.");
+ const by={};a.forEach(s=>(by[s.level]=by[s.level]||[]).push(s));
+ return who()+Object.keys(by).map(l=>`<h3 class="hi">${lvlName(+l)} (${by[l].length})</h3>`+rail(by[l].map(s=>spellCard(s,1)))).join("")}
+// feats
+function featCard(f,x){return gcard({t:f.name,meta:[f.cat,f.pre&&"Prerequisite: "+f.pre].filter(Boolean).join(" · "),body:f.text,foot:f.source,btn:x?rmBtn("rf",f.key):""})}
+function featList(){const c=$("cat").value,t=q();
+ const a=D.feats.filter(f=>(!c||f.cat===c)&&f.name.toLowerCase().includes(t)).sort((x,y)=>x.name.localeCompare(y.name));
+ return who()+a.map(f=>row({k:"f:"+f.key,in:cur?`<input type="checkbox" data-kf="${esc(f.key)}" ${fsel.has(f.key)?"checked":""}>`:"",n:f.name,s:f.cat+" · "+f.source,c:()=>featCard(f)})).join("")+(a.length?"":empty(D.feats.length?"No matches.":"Loading…"))}
+function featDeck(){const a=D.feats.filter(f=>fsel.has(f.key)).sort((x,y)=>x.cat.localeCompare(y.cat)||x.name.localeCompare(y.name));
+ if(!a.length)return who()+empty("No feats yet. Pick some on the Feat list tab.");
+ const by={};a.forEach(f=>(by[f.cat]=by[f.cat]||[]).push(f));
+ return who()+Object.keys(by).map(k=>`<h3 class="hi">${esc(k)} (${by[k].length})</h3>`+rail(by[k].map(f=>featCard(f,1)))).join("")}
+// species
+function spCards(p){return[gcard({t:p.name,meta:"Species",dl:[["Size",p.size],["Speed",p.speed]].filter(x=>x[1]),body:p.notes,foot:p.source})].concat(p.traits.map(t=>gcard({t:t.name,meta:p.name,body:t.text,foot:p.source})))}
+function speciesList(){const t=q(),c=C();
+ const a=D.species.filter(p=>p.name.toLowerCase().includes(t));
+ return who()+a.map(p=>row({k:"p:"+p.key,in:c?`<input type="radio" name="sp" data-spc="${esc(p.key)}" ${c.species===p.key?"checked":""}>`:"",n:p.name,s:p.source,c:()=>rail(spCards(p))})).join("")+(a.length?"":empty(D.species.length?"No matches.":"Loading…"))}
+function speciesDeck(){const c=C(),p=D.species.find(x=>x.key===c.species);
+ if(!p)return who()+empty("No species chosen. Pick one on the Species list tab.");
+ return who()+`<h3 class="hi">${esc(p.name)}</h3>`+rail(spCards(p))+'<p><button data-clr="1">Clear species</button></p>'}
+// classes
+const fcard=(f,owner,sub)=>gcard({t:f.name,meta:"Level "+f.level+" · "+owner,body:f.text,foot:owner,cls:sub?"sub":""});
+const byLvl=a=>a.slice().sort((x,y)=>x.level-y.level||x.name.localeCompare(y.name));
+function classList(){const c=C(),t=q();let h=who();const tot=c?total(c):0;
+ if(c)h+=`<p class="who">Total level: <b>${tot}</b> / 20</p>`;
+ const a=D.classes.filter(k=>k.name.toLowerCase().includes(t));
+ a.forEach(k=>{const ck=ckey(k),lv=c?c.classes[ck]||0:0;
+  h+=row({k:"c:"+ck,n:k.name,s:k.source+(lv?" · level "+lv:""),x:c?`<button data-lv="${esc(ck)}" data-d="-1" ${lv?"":"disabled"}>−</button><b>${lv}</b><button data-lv="${esc(ck)}" data-d="1" ${tot>=20?"disabled":""}>+</button>`:"",c:()=>rail(byLvl(k.features).map(f=>fcard(f,k.name)))})});
+ return h+(a.length?"":empty(D.classes.length?"No matches.":"Loading…"))}
+function classSubs(){const c=C();let h=who();
+ const list=c?D.classes.filter(k=>(c.classes[ckey(k)]||0)>0):D.classes;
+ if(c&&!list.length)return h+empty("Add levels on the Class tab first.");
+ list.forEach((k,i)=>{const ck=ckey(k),id="g:"+ck,isOpen=og.has(id)||(c&&!cg.has(id));
+  h+=`<details data-g="${esc(id)}" ${isOpen?"open":""}><summary><b>${esc(k.name)}</b>${c?" · level "+c.classes[ck]:""}</summary>`;
+  if(c)h+=`<div class="row"><input type="radio" name="r${i}" data-sc="${esc(ck)}" data-sv="" ${c.subs[ck]?"":"checked"}><span class="n">None yet</span></div>`;
+  h+=k.subs.map(s=>{const sv=s.short+"|"+s.source;
+   return row({k:"u:"+ck+"|"+sv,in:c?`<input type="radio" name="r${i}" data-sc="${esc(ck)}" data-sv="${esc(sv)}" ${c.subs[ck]===sv?"checked":""}>`:"",n:s.name,s:s.source,c:()=>s.features.length?rail(byLvl(s.features).map(f=>fcard(f,s.name,1))):empty("No features found.")})}).join("")+(k.subs.length?"":empty("No subclasses."))+"</details>"});
+ return h}
+function classDeck(){const c=C();let h=who()+`<p class="who">Total level: <b>${total(c)}</b> / 20</p>`;
+ const list=D.classes.filter(k=>(c.classes[ckey(k)]||0)>0);
+ if(!list.length)return h+empty("No classes yet. Add levels on the Class tab.");
+ list.forEach(k=>{const ck=ckey(k),lv=c.classes[ck],sv=c.subs[ck],s=sv&&k.subs.find(x=>x.short+"|"+x.source===sv);
+  const cards=byLvl(k.features.filter(f=>f.level<=lv).map(f=>({...f,own:0})).concat(s?s.features.filter(f=>f.level<=lv).map(f=>({...f,own:1})):[])).map(f=>f.own?fcard(f,s.name,1):fcard(f,k.name));
+  h+=`<h3 class="hi">${esc(k.name)} ${lv}${s?" · "+esc(s.name):""}</h3>`+(cards.length?rail(cards):empty("No features at this level."))});
+ return h}
+// ---------- events ----------
+const keep=f=>{const y=scrollY;f();scrollTo(0,y)};
+document.addEventListener("toggle",e=>{const t=e.target;if(t.dataset&&t.dataset.g){if(t.open){og.add(t.dataset.g);cg.delete(t.dataset.g)}else{og.delete(t.dataset.g);cg.add(t.dataset.g)}}},true);
 document.addEventListener("click",e=>{const t=e.target,d=t.dataset;
- if(t.id==="mb")menu(1);else if(t.id==="ov")menu(0);else if(d.go!==undefined){tab=d.go==="s"?(cur?2:1):+d.go;menu(0);draw();scrollTo(0,0)}else if(t.id==="t1"){tab=1;draw()}else if(t.id==="t2"){tab=2;draw()}
+ if(t.id==="mb")menu(1);else if(t.id==="ov")menu(0);
+ else if(d.go){page=d.go;$("q").value="";menu(0);draw();scrollTo(0,0)}
+ else if(d.st){sub[page]=d.st;draw();scrollTo(0,0)}
  else if(t.id==="upd")init(true);
-
- else if(t.id==="newc"){const n=prompt("Character name?");if(n&&n.trim()){const id="c"+Date.now();chars[id]={name:n.trim(),deck:[]};save();setCur(id);draw()}}
-
+ else if(t.id==="newc"){const n=prompt("Character name?");if(n&&n.trim()){save();const id="c"+Date.now();chars[id]={name:n.trim()};fix(chars[id]);setCur(id);draw()}}
  else if(d.rn){const n=prompt("Rename character",chars[d.rn].name);if(n&&n.trim()){chars[d.rn].name=n.trim();draw()}}
- else if(d.del){if(confirm("Delete "+chars[d.del].name+" and their deck?")){delete chars[d.del];if(cur===d.del){cur=null;sel=new Set()}draw()}}
- else if(d.v){open.has(d.v)?open.delete(d.v):open.add(d.v);const y=scrollY;draw();scrollTo(0,y)}
- else if(d.rm){sel.delete(d.rm);draw()}});
-document.addEventListener("change",e=>{const t=e.target;if(t.dataset.act!==undefined){save();if(t.dataset.act)setCur(t.dataset.act);else{cur=null;sel=new Set()}draw()}else if(t.dataset.k){t.checked?sel.add(t.dataset.k):sel.delete(t.dataset.k);save()}else if(t.id==="nm")setTh(t.checked?"dark":"light");else if(t.id==="sort"||t.id==="cls")draw()});
+ else if(d.del){if(confirm("Delete "+chars[d.del].name+" and everything saved for them?")){delete chars[d.del];if(cur===d.del)noCur();draw()}}
+ else if(d.v)keep(()=>{open.has(d.v)?open.delete(d.v):open.add(d.v);draw()});
+ else if(d.rm){sel.delete(d.rm);keep(draw)}
+ else if(d.rf){fsel.delete(d.rf);keep(draw)}
+ else if(d.clr){C().species="";draw()}
+ else if(d.lv){const c=C();if(c&&!(+d.d>0&&total(c)>=20)){c.classes[d.lv]=Math.max(0,(c.classes[d.lv]||0)+ +d.d);keep(draw)}}});
+document.addEventListener("change",e=>{const t=e.target,d=t.dataset;
+ if(d.act!==undefined){save();if(d.act)setCur(d.act);else noCur();draw()}
+ else if(d.k){t.checked?sel.add(d.k):sel.delete(d.k);save()}
+ else if(d.kf){t.checked?fsel.add(d.kf):fsel.delete(d.kf);save()}
+ else if(d.spc){C().species=d.spc;save()}
+ else if(d.sc){C().subs[d.sc]=d.sv;save()}
+ else if(t.id==="nm")setTh(t.checked?"dark":"light");
+ else if(t.id==="sort"||t.id==="cls"||t.id==="cat")draw()});
 $("q").addEventListener("input",draw);
-$("cnt").textContent=sel.size;init();
+draw();init();
 if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 </script></body></html>
