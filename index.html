@@ -40,7 +40,8 @@ main{padding:10px 12px 60px;max-width:1100px;margin:auto}
 #msc{flex:1;overflow-y:auto;padding:0 8px}
 #drawer button{text-align:left;font-size:17px;padding:11px 12px;border:none;background:none;width:100%;border-radius:8px}
 #drawer button.on{background:var(--ac);color:#fff}
-.mrow{display:flex;align-items:center}.mrow .plus{width:44px;text-align:center;font-size:22px;color:var(--ac);flex:none}
+.mrow{display:flex;align-items:center}#drawer .mrow .mh{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#drawer .mrow .edit{width:auto;flex:none;font-size:14px;padding:6px 12px;margin-right:4px;border:1px solid var(--bd);color:var(--ac)}
+#drawer .newc{display:flex;justify-content:space-between;align-items:center;font-weight:bold}#drawer .newc span{font-size:22px;line-height:1;color:var(--ac)}
 .mh{font-weight:bold}.car{display:inline-block;width:18px;color:var(--mut)}
 .kids{margin:0 0 6px 20px;border-left:2px solid var(--bd);padding-left:6px}.kids button{font-size:16px;padding:9px 10px}
 .msep{border-top:1px solid var(--bd);margin:8px 4px}
@@ -53,7 +54,8 @@ main{padding:10px 12px 60px;max-width:1100px;margin:auto}
 .sheet summary{padding:8px 0;font-size:15px}.fls{max-height:220px;overflow:auto;border:1px solid var(--bd);border-radius:8px;padding:4px 8px;margin-top:6px}
 .fl{display:flex!important;align-items:center;gap:8px;padding:5px 0;color:var(--fg)!important;font-size:15px!important}.fl input{width:auto;margin:0}
 .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}.acts .go{background:var(--ac);color:#fff;border-color:var(--ac)}
-.lnk{background:none;border:none;font-weight:bold;color:var(--fg);padding:4px 0;text-align:left}
+.acts .danger{margin-right:auto;color:#c0392b;border-color:#c0392b}
+.col{display:flex;flex-direction:column;gap:12px;padding-bottom:14px}.col .card{width:100%;height:auto;max-width:none}.col .body{overflow:visible}
 </style></head><body>
 <header>
 <div class="top"><button id="mb" aria-label="Menu">☰</button><b id="ttl">Spells</b></div>
@@ -75,9 +77,9 @@ const SCH={A:"Abjuration",C:"Conjuration",D:"Divination",E:"Enchantment",V:"Evoc
 const SZ={T:"Tiny",S:"Small",M:"Medium",L:"Large",H:"Huge",G:"Gargantuan",V:"Varies"};
 const SRC=["PHB","DMG","EEPC","SCAG","VGM","MTF","GGR","ERLW","AI","TCE","MOT","EGW","SCC","VRGR","WBtW","AAG","FTD","MPMM","DSotDQ","XPHB","EFA","LFL"];
 const CAT={G:"General",O:"Origin",FS:"Fighting Style","FS:P":"Fighting Style (Paladin)","FS:R":"Fighting Style (Ranger)",EB:"Epic Boon",D:"Dragonmark",DG:"Dark Gift"};
-const PAGES={chars:"Characters",spells:"Spells",feats:"Feats",species:"Species",class:"Class",settings:"Settings"};
+const PAGES={spells:"Spells",feats:"Feats",species:"Species",class:"Class",settings:"Settings"};
 const $=s=>document.getElementById(s);
-const DV=5,VER=9;
+const DV=5,VER=10;
 let D={spells:[],feats:[],species:[],classes:[]},page=localStorage.getItem("page")||"spells",sub=JSON.parse(localStorage.getItem("sub")||"{}"),open=new Set(),og=new Set(),cg=new Set();
 if(!PAGES[page])page="spells";
 let mopen=new Set(JSON.parse(localStorage.getItem("mopen")||"null")||["ref"]);
@@ -220,27 +222,30 @@ function drawMenu(){
  const on=(p,id)=>page===p&&(id===undefined||(id||null)===cur)?"on":"";
  const kid=(p,l,id)=>`<button class="${on(p,id)}" data-go="${p}" data-pc="${id}">${l}</button>`;
  const tg=(g,l)=>`<button class="mh" data-tg="${g}"><span class="car">${mopen.has(g)?"▾":"▸"}</span>${esc(l)}</button>`;
- let h='<h2>Spell Deck</h2><div id="msc"><div class="mrow"><button class="'+(page==="chars"?"on":"")+'" data-go="chars">Characters</button><button class="plus" data-newc="1" aria-label="New character">+</button></div>';
+ let h='<h2>Spell Deck</h2><div id="msc"><button class="newc" data-newc="1">Characters<span>+</span></button>';
  Object.entries(chars).forEach(([id,c])=>{const g="pc:"+id;
-  h+=tg(g,c.name)+(mopen.has(g)?`<div class="kids">${kid("class","Class",id)}${kid("feats","Feats",id)}${kid("species","Species",id)}${isCaster(c)?kid("spells","Spells",id):""}</div>`:"")});
+  h+=(mopen.has(g)?`<div class="mrow">${tg(g,c.name)}<button class="edit" data-edit="${id}">Edit</button></div>`:tg(g,c.name))+(mopen.has(g)?`<div class="kids">${kid("class","Class",id)}${kid("feats","Feats",id)}${kid("species","Species",id)}${isCaster(c)?kid("spells","Spells",id):""}</div>`:"")});
  h+='<div class="msep"></div>'+tg("ref","Reference")+(mopen.has("ref")?`<div class="kids">${kid("spells","Spells","")}${kid("feats","Feats","")}${kid("species","Species","")}${kid("class","Class","")}</div>`:"")+'</div>';
  h+=`<button id="gear" class="${page==="settings"?"on":""}" data-go="settings" aria-label="Settings">⚙</button>`;
  $("drawer").innerHTML=h}
 function nav(p,id){save();
  if(id!==undefined){if(id)setCur(id);else noCur()}
- if(p!=="chars"&&p!=="settings"){mopen.add(grp())}
+ if(p!=="settings"){mopen.add(grp())}
  page=p;$("q").value="";localStorage.setItem("mopen",JSON.stringify([...mopen]));menu(0);draw();scrollTo(0,0)}
-function openNew(){
+let editing=null;
+function openChar(id){editing=id||null;const c=id?chars[id]:null,fs=new Set(c?c.feats:[]);
  const cl=D.classes.map(k=>`<option value="${esc(ckey(k))}">${esc(k.name)}${k.source!=="XPHB"?" ("+esc(k.source)+")":""}</option>`).join("");
  const sp=D.species.map(p=>`<option value="${esc(p.key)}">${esc(p.name)}</option>`).join("");
- const ft=D.feats.map(f=>`<label class="fl" data-n="${esc(f.name.toLowerCase())}"><input type="checkbox" value="${esc(f.key)}"> ${esc(f.name)} <small>${esc(f.cat)}</small></label>`).join("");
- $("mod").innerHTML=`<div class="sheet"><h2>New character</h2><label>Name<input id="nn" type="text" placeholder="Character name" autocomplete="off"></label><label>Starting class (optional)<select id="nc"><option value="">None</option>${cl}</select></label><label>Species (optional)<select id="ns"><option value="">None</option>${sp}</select></label><details><summary>Feats (optional) <small id="nfc"></small></summary><input id="nf" type="search" placeholder="Filter feats…"><div class="fls">${ft||"<small>Feats haven't downloaded yet.</small>"}</div></details><div class="acts"><button data-mc="1">Cancel</button><button class="go" data-ok="1">Create</button></div></div>`;
- menu(0);$("mod").classList.add("open");setTimeout(()=>{const n=$("nn");n&&n.focus()},50)}
-function createChar(){
- const c={name:$("nn").value.trim()||"New Character"};fix(c);
- const k=$("nc").value;if(k)c.classes[k]=1;
- c.species=$("ns").value;
- c.feats=[...document.querySelectorAll("#mod .fls input:checked")].map(x=>x.value);
+ const ft=D.feats.map(f=>`<label class="fl" data-n="${esc(f.name.toLowerCase())}"><input type="checkbox" value="${esc(f.key)}" ${fs.has(f.key)?"checked":""}> ${esc(f.name)} <small>${esc(f.cat)}</small></label>`).join("");
+ $("mod").innerHTML=`<div class="sheet"><h2>${c?"Edit character":"New character"}</h2><label>Name<input id="nn" type="text" placeholder="Character name" autocomplete="off"></label>${c?"":`<label>Starting class (optional)<select id="nc"><option value="">None</option>${cl}</select></label>`}<label>Species${c?"":" (optional)"}<select id="ns"><option value="">None</option>${sp}</select></label><details><summary>Feats${c?"":" (optional)"} <small id="nfc"></small></summary><input id="nf" type="search" placeholder="Filter feats…"><div class="fls">${ft||"<small>Feats haven't downloaded yet.</small>"}</div></details><div class="acts">${c?`<button class="danger" data-del="${id}">Delete</button>`:""}<button data-mc="1">Cancel</button><button class="go" data-ok="1">${c?"Save":"Create"}</button></div></div>`;
+ if(c){$("nn").value=c.name;$("ns").value=c.species||""}
+ const n=fs.size;$("nfc").textContent=n?"("+n+" chosen)":"";
+ menu(0);$("mod").classList.add("open");if(!c)setTimeout(()=>{const x=$("nn");x&&x.focus()},50)}
+function okChar(){
+ const name=$("nn").value.trim()||"New Character",feats=[...document.querySelectorAll("#mod .fls input:checked")].map(x=>x.value),species=$("ns").value;
+ if(editing&&chars[editing]){const c=chars[editing];save();c.name=name;c.species=species;c.feats=feats;if(cur===editing)fsel=new Set(feats);
+  $("mod").classList.remove("open");editing=null;draw();return}
+ const c={name};fix(c);const k=$("nc").value;if(k)c.classes[k]=1;c.species=species;c.feats=feats;
  save();const id="c"+Date.now();chars[id]=c;setCur(id);
  $("mod").classList.remove("open");mopen.add("pc:"+id);
  if(!k)sub.class="class";else delete sub.class;
@@ -254,32 +259,28 @@ function row(o){return`<div class="row">${o.in||""}<span class="n">${esc(o.n)} <
 const rmBtn=(a,k)=>`<button data-${a}="${esc(k)}">Remove</button>`;
 function tabsFor(){const c=C();
  if(page==="class")return c?[["class","Class"],["sub","Subclass"],["deck","Deck"]]:[["class","Class"],["sub","Subclass"]];
- if(!c||!["spells","feats","species"].includes(page))return[];
- const n=page==="spells"?sel.size:page==="feats"?fsel.size:(c.species?1:0);
- return[["list",{spells:"Spell list",feats:"Feat list",species:"Species list"}[page]],["deck","Deck ("+n+")"]]}
+ if(!c||!["spells","feats"].includes(page))return[];
+ const n=page==="spells"?sel.size:fsel.size;
+ return[["list",{spells:"Spell list",feats:"Feat list"}[page]],["deck","Deck ("+n+")"]]}
 function curSub(){const t=tabsFor().map(x=>x[0]);let s=sub[page];if(!t.includes(s))s=t.includes("deck")?"deck":t[0]||"list";return s}
 function draw(){save();const tabs=tabsFor(),st=curSub();
  drawMenu();
- $("ttl").textContent=page==="chars"||page==="settings"?PAGES[page]:(cur?chars[cur].name:"Reference")+" · "+PAGES[page];
+ $("ttl").textContent=page==="settings"?PAGES[page]:(cur?chars[cur].name:"Reference")+" · "+PAGES[page];
  $("tabs").style.display=tabs.length?"flex":"none";
  $("tabs").innerHTML=tabs.map(([k,l])=>`<button class="tab ${k===st?"on":""}" data-st="${k}">${l}</button>`).join("");
- const lv=((page==="spells"||page==="feats"||page==="species")&&st==="list")||(page==="class"&&st==="class");
+ const lv=((page==="spells"||page==="feats")&&st==="list")||(page==="species"&&!cur)||(page==="class"&&st==="class");
  document.querySelector(".bar").style.display=lv?"flex":"none";
  $("sort").style.display=$("cls").style.display=page==="spells"?"":"none";
  $("cat").style.display=page==="feats"?"":"none";
  $("st").style.display=lv||page==="settings"?"block":"none";
  $("m").innerHTML=view(st)}
 function view(st){
- if(page==="chars")return charsView();
  if(page==="settings")return settingsView();
  if(page==="spells")return st==="deck"?spellDeck():spellList();
  if(page==="feats")return st==="deck"?featDeck():featList();
- if(page==="species")return st==="deck"?speciesDeck():speciesList();
+ if(page==="species")return cur?speciesDeck():speciesList();
  return st==="deck"?classDeck():st==="sub"?classSubs():classList()}
 // characters / settings
-function charsView(){
- const rows=Object.entries(chars).map(([id,c])=>`<div class="row"><span class="n"><button class="lnk" data-go="class" data-pc="${id}">${esc(c.name)}</button><br><small>${[total(c)?"level "+total(c):"",c.species?c.species.split("|")[0]:"",c.feats.length+" feats",c.deck.length+" spells"].filter(Boolean).join(" · ")}</small></span><button data-rn="${id}">Rename</button><button data-del="${id}">Delete</button></div>`).join("");
- return(rows||empty("No characters yet."))+'<p><button data-newc="1">+ New character</button></p>'}
 function settingsView(){return`<div class="row"><span class="n">Night mode</span><input type="checkbox" id="nm" ${document.documentElement.dataset.theme==="dark"?"checked":""}></div><div class="row"><span class="n">5etools data <small>${counts()}</small></span><button id="upd">Update</button></div><p class="who">App version ${VER}</p>`}
 // spells
 function spellCard(s,x){return gcard({t:s.name,meta:`${ordl(s.level)} ${s.school.toLowerCase()}${s.ritual?" (ritual)":""}`,dl:[["Cast",s.time],["Range",s.range],["Comp.",s.comp],["Dur.",s.dur]],body:s.text,foot:s.classes.join(", ")+" · "+s.source,btn:x?rmBtn("rm",key(s)):""})}
@@ -304,12 +305,13 @@ function featDeck(){const a=D.feats.filter(f=>fsel.has(f.key)).sort((x,y)=>x.cat
  return who()+Object.keys(by).map(k=>`<h3 class="hi">${esc(k)} (${by[k].length})</h3>`+rail(by[k].map(f=>featCard(f,1)))).join("")}
 // species
 function spCards(p){return[gcard({t:p.name,meta:"Species",dl:[["Size",p.size],["Speed",p.speed]].filter(x=>x[1]),body:p.notes,foot:p.source})].concat(p.traits.map(t=>gcard({t:t.name,meta:p.name,body:t.text,foot:p.source})))}
-function speciesList(){const t=q(),c=C();
+const col=a=>`<div class="col">${a.join("")}</div>`;
+function speciesList(){const t=q();
  const a=D.species.filter(p=>p.name.toLowerCase().includes(t));
- return who()+a.map(p=>row({k:"p:"+p.key,in:c?`<input type="radio" name="sp" data-spc="${esc(p.key)}" ${c.species===p.key?"checked":""}>`:"",n:p.name,s:p.source,c:()=>rail(spCards(p))})).join("")+(a.length?"":empty(D.species.length?"No matches.":"Loading…"))}
+ return who()+a.map(p=>row({k:"p:"+p.key,n:p.name,s:p.source,c:()=>col(spCards(p))})).join("")+(a.length?"":empty(D.species.length?"No matches.":"Loading…"))}
 function speciesDeck(){const c=C(),p=D.species.find(x=>x.key===c.species);
- if(!p)return who()+empty("No species chosen. Pick one on the Species list tab.");
- return who()+`<h3 class="hi">${esc(p.name)}</h3>`+rail(spCards(p))+'<p><button data-clr="1">Clear species</button></p>'}
+ if(!p)return who()+empty("No species chosen. Use Edit on the character in the menu to pick one.");
+ return who()+`<h3 class="hi">${esc(p.name)}</h3>`+col(spCards(p))}
 // classes
 const fcard=(f,owner,sub)=>gcard({t:f.name,meta:"Level "+f.level+" · "+owner,body:f.text,foot:owner,cls:sub?"sub":""});
 const byLvl=a=>a.slice().sort((x,y)=>x.level-y.level||x.name.localeCompare(y.name));
@@ -342,22 +344,22 @@ document.addEventListener("click",e=>{let t=e.target;const b=t.closest&&t.closes
  if(t.id==="mb")menu(1);else if(t.id==="ov")menu(0);
  else if(d.go)nav(d.go,d.pc)
  else if(d.tg){mopen.has(d.tg)?mopen.delete(d.tg):mopen.add(d.tg);localStorage.setItem("mopen",JSON.stringify([...mopen]));drawMenu()}
- else if(d.newc!==undefined)openNew()
+ else if(d.newc!==undefined)openChar()
+ else if(d.edit)openChar(d.edit)
  else if(d.mc!==undefined||t.id==="mod")$("mod").classList.remove("open")
- else if(d.ok!==undefined)createChar()
+ else if(d.ok!==undefined)okChar()
  else if(d.st){sub[page]=d.st;draw();scrollTo(0,0)}
  else if(t.id==="upd")init(true);
- else if(d.rn){const n=prompt("Rename character",chars[d.rn].name);if(n&&n.trim()){chars[d.rn].name=n.trim();draw()}}
- else if(d.del){if(confirm("Delete "+chars[d.del].name+" and everything saved for them?")){delete chars[d.del];mopen.delete("pc:"+d.del);if(cur===d.del){noCur();if(page!=="chars"&&page!=="settings")page="chars"}draw()}}
+ else if(d.del){if(confirm("Delete "+chars[d.del].name+" and everything saved for them?")){delete chars[d.del];mopen.delete("pc:"+d.del);localStorage.setItem("mopen",JSON.stringify([...mopen]));if(cur===d.del){noCur();if(page!=="settings")page="spells"}$("mod").classList.remove("open");editing=null;draw()}}
  else if(d.v)keep(()=>{open.has(d.v)?open.delete(d.v):open.add(d.v);draw()});
  else if(d.rm){sel.delete(d.rm);keep(draw)}
  else if(d.rf){fsel.delete(d.rf);keep(draw)}
- else if(d.clr){C().species="";draw()}
+
  else if(d.lv){const c=C();if(c&&!(+d.d>0&&total(c)>=20)){c.classes[d.lv]=Math.max(0,(c.classes[d.lv]||0)+ +d.d);keep(draw)}}});
 document.addEventListener("change",e=>{const t=e.target,d=t.dataset;
  if(d.k){t.checked?sel.add(d.k):sel.delete(d.k);save()}
  else if(d.kf){t.checked?fsel.add(d.kf):fsel.delete(d.kf);save()}
- else if(d.spc){C().species=d.spc;save()}
+
  else if(d.sc){C().subs[d.sc]=d.sv;save()}
  else if(t.id==="nm")setTh(t.checked?"dark":"light");
  else if(t.id==="sort"||t.id==="cls"||t.id==="cat")draw()});

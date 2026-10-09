@@ -1,4 +1,4 @@
-const V="spelldeck-v9",FILES=["./","index.html","manifest.webmanifest","icons/icon-192.png?v=2","icons/icon-512.png?v=2","icons/icon-180.png?v=2"];
+const V="spelldeck-v10",FILES=["./","index.html","manifest.webmanifest","icons/icon-192.png?v=2","icons/icon-512.png?v=2","icons/icon-180.png?v=2"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
 self.addEventListener("fetch",e=>{
