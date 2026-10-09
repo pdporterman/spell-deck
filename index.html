@@ -35,12 +35,25 @@ main{padding:10px 12px 60px;max-width:1100px;margin:auto}
 .card .ft{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mut);margin-top:6px;gap:6px}
 .top{display:flex;align-items:center;gap:10px;margin-bottom:8px}.top b{font-size:18px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#mb{font-size:20px;padding:4px 12px}
 #ov{position:fixed;inset:0;background:#0006;z-index:9;display:none}#ov.open{display:block}
-#drawer{position:fixed;top:0;bottom:0;left:0;width:260px;max-width:80%;background:var(--bg);border-right:1px solid var(--bd);z-index:10;padding:16px 12px;transform:translateX(-105%);transition:transform .2s;display:flex;flex-direction:column;gap:8px}
-#drawer.open{transform:none}#drawer button{text-align:left;font-size:17px;padding:12px}#drawer h2{margin:0 0 6px;color:var(--ac)}
-details{margin:8px 0;border:1px solid var(--bd);border-radius:10px;padding:2px 10px}summary{cursor:pointer;padding:8px 0}
-.empty{text-align:center;color:var(--mut);padding:40px 10px}
-.who{color:var(--mut);margin:2px 0 8px}
-.hi{color:var(--ac)}
+#drawer{position:fixed;top:0;bottom:0;left:0;width:290px;max-width:85%;background:var(--bg);border-right:1px solid var(--bd);z-index:10;transform:translateX(-105%);transition:transform .2s;display:flex;flex-direction:column}
+#drawer.open{transform:none}#drawer h2{margin:0;padding:16px 14px 8px;color:var(--ac)}
+#msc{flex:1;overflow-y:auto;padding:0 8px}
+#drawer button{text-align:left;font-size:17px;padding:11px 12px;border:none;background:none;width:100%;border-radius:8px}
+#drawer button.on{background:var(--ac);color:#fff}
+.mrow{display:flex;align-items:center}.mrow .plus{width:44px;text-align:center;font-size:22px;color:var(--ac);flex:none}
+.mh{font-weight:bold}.car{display:inline-block;width:18px;color:var(--mut)}
+.kids{margin:0 0 6px 20px;border-left:2px solid var(--bd);padding-left:6px}.kids button{font-size:16px;padding:9px 10px}
+.msep{border-top:1px solid var(--bd);margin:8px 4px}
+#drawer #gear{width:46px;height:46px;font-size:24px;margin:8px;padding:0;text-align:center;border:1px solid var(--bd);background:var(--card);flex:none}
+#drawer #gear.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+#mod{position:fixed;inset:0;background:#0008;z-index:20;display:none;align-items:center;justify-content:center;padding:12px}#mod.open{display:flex}
+.sheet{background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:16px;width:100%;max-width:420px;max-height:90vh;overflow:auto}
+.sheet h2{margin:0 0 10px;color:var(--ac)}.sheet label{display:block;font-size:14px;color:var(--mut)}
+.sheet input[type=text],.sheet input[type=search],.sheet select{width:100%;margin:4px 0 12px;font-size:16px}
+.sheet summary{padding:8px 0;font-size:15px}.fls{max-height:220px;overflow:auto;border:1px solid var(--bd);border-radius:8px;padding:4px 8px;margin-top:6px}
+.fl{display:flex!important;align-items:center;gap:8px;padding:5px 0;color:var(--fg)!important;font-size:15px!important}.fl input{width:auto;margin:0}
+.acts{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}.acts .go{background:var(--ac);color:#fff;border-color:var(--ac)}
+.lnk{background:none;border:none;font-weight:bold;color:var(--fg);padding:4px 0;text-align:left}
 </style></head><body>
 <header>
 <div class="top"><button id="mb" aria-label="Menu">☰</button><b id="ttl">Spells</b></div>
@@ -53,7 +66,8 @@ details{margin:8px 0;border:1px solid var(--bd);border-radius:10px;padding:2px 1
 <div id="st">Loading…</div>
 </header>
 <div id="ov"></div>
-<nav id="drawer"><h2>Spell Deck</h2><button data-go="chars">Characters</button><button data-go="spells">Spells</button><button data-go="feats">Feats</button><button data-go="species">Species</button><button data-go="class">Class</button><button data-go="settings">Settings</button></nav>
+<nav id="drawer"></nav>
+<div id="mod"></div>
 <main id="m"></main>
 <script>
 const BASE="https://raw.githubusercontent.com/5etools-mirror-3/5etools-src/main/data/";
@@ -63,9 +77,10 @@ const SRC=["PHB","DMG","EEPC","SCAG","VGM","MTF","GGR","ERLW","AI","TCE","MOT","
 const CAT={G:"General",O:"Origin",FS:"Fighting Style","FS:P":"Fighting Style (Paladin)","FS:R":"Fighting Style (Ranger)",EB:"Epic Boon",D:"Dragonmark",DG:"Dark Gift"};
 const PAGES={chars:"Characters",spells:"Spells",feats:"Feats",species:"Species",class:"Class",settings:"Settings"};
 const $=s=>document.getElementById(s);
-const DV=4,VER=8;
+const DV=5,VER=9;
 let D={spells:[],feats:[],species:[],classes:[]},page=localStorage.getItem("page")||"spells",sub=JSON.parse(localStorage.getItem("sub")||"{}"),open=new Set(),og=new Set(),cg=new Set();
 if(!PAGES[page])page="spells";
+let mopen=new Set(JSON.parse(localStorage.getItem("mopen")||"null")||["ref"]);
 let chars=JSON.parse(localStorage.getItem("chars")||"null"),cur=localStorage.getItem("cur"),sel=new Set(),fsel=new Set();
 if(!chars){chars={};const old=JSON.parse(localStorage.getItem("deck")||"[]");if(old.length){chars.c0={name:"My Character",deck:old};cur="c0"}}
 function fix(c){c.deck=c.deck||[];c.feats=c.feats||[];c.species=c.species||"";c.classes=c.classes||{};c.subs=c.subs||{}}
@@ -74,7 +89,7 @@ if(!chars[cur])cur=null;
 const C=()=>cur?chars[cur]:null;
 function setCur(id){cur=id;const c=chars[id];sel=new Set(c.deck);fsel=new Set(c.feats);localStorage.setItem("cur",id)}
 function noCur(){cur=null;sel=new Set();fsel=new Set()}
-if(cur)setCur(cur);
+if(cur)setCur(cur);if(!localStorage.getItem("mopen")&&cur)mopen.add("pc:"+cur);
 function setTh(t){document.documentElement.dataset.theme=t;localStorage.setItem("theme",t);if($("nm"))$("nm").checked=t==="dark"}
 const menu=o=>{$("drawer").classList.toggle("open",!!o);$("ov").classList.toggle("open",!!o)};
 setTh(localStorage.getItem("theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"));
@@ -163,8 +178,9 @@ function procClasses(files){const out=[];
     const x=cfm[[p[0],p[1],p[2]||"PHB",p[3]].join("|").toLowerCase()];if(x)feats.push({name:x.name,level:x.level,text:render(expand(x.entries,look))})});
    const subs=(f.subclass||[]).filter(s=>s.className===c.name&&s.classSource===c.source&&!s.reprintedAs&&!/^UA/.test(s.source)).map(s=>{const sf=[];
     (s.subclassFeatures||(s._copy&&((f.subclass||[]).find(b=>b!==s&&b.name===s._copy.name&&b.source===s._copy.source&&b.className===s._copy.className&&(!s._copy.classSource||b.classSource===s._copy.classSource)&&b.subclassFeatures)||{}).subclassFeatures)||[]).forEach(ref=>{const p=ref.split("|");const x=sfm[[p[0],p[1],p[2]||"PHB",p[3],p[4]||"PHB",p[5]].join("|").toLowerCase()];if(x)sf.push({name:x.name,level:x.level,text:render(expand(x.entries,look))})});
-    return{name:s.name,short:s.shortName,source:s.source,features:sf}}).filter((s,i,a)=>s.source==="XPHB"||!a.some(o=>o.name===s.name&&o.source==="XPHB")).sort((a,b)=>a.name.localeCompare(b.name));
-   out.push({name:c.name,source:c.source,features:feats,subs})}}
+    const bsub=s._copy&&(f.subclass||[]).find(b=>b!==s&&b.name===s._copy.name&&b.source===s._copy.source&&b.className===s._copy.className);
+    return{name:s.name,short:s.shortName,source:s.source,caster:!!(s.casterProgression||(bsub&&bsub.casterProgression)),features:sf}}).filter((s,i,a)=>s.source==="XPHB"||!a.some(o=>o.name===s.name&&o.source==="XPHB")).sort((a,b)=>a.name.localeCompare(b.name));
+   out.push({name:c.name,source:c.source,caster:!!(c.casterProgression||c.spellcastingAbility),features:feats,subs})}}
  return out.sort((a,b)=>a.name.localeCompare(b.name))}
 async function fetchAll(){
  $("st").textContent="Downloading from 5etools…";
@@ -197,8 +213,40 @@ function ui(){
  const ct=new Set(D.feats.map(f=>f.cat));cur1=$("cat").value;$("cat").innerHTML='<option value="">All categories</option>'+[...ct].sort().map(c=>`<option>${esc(c)}</option>`).join("");$("cat").value=cur1;
  draw()}
 function save(){localStorage.setItem("page",page);localStorage.setItem("sub",JSON.stringify(sub));const c=C();if(c){c.deck=[...sel];c.feats=[...fsel]}localStorage.setItem("chars",JSON.stringify(chars));cur?localStorage.setItem("cur",cur):localStorage.removeItem("cur")}
+function isCaster(c){if(c.deck.length)return true;
+ return D.classes.some(k=>{const ck=ckey(k);if(!(c.classes[ck]>0))return false;if(k.caster)return true;const sv=c.subs[ck],u=sv&&k.subs.find(x=>x.short+"|"+x.source===sv);return!!(u&&u.caster)})}
+const grp=()=>cur?"pc:"+cur:"ref";
+function drawMenu(){
+ const on=(p,id)=>page===p&&(id===undefined||(id||null)===cur)?"on":"";
+ const kid=(p,l,id)=>`<button class="${on(p,id)}" data-go="${p}" data-pc="${id}">${l}</button>`;
+ const tg=(g,l)=>`<button class="mh" data-tg="${g}"><span class="car">${mopen.has(g)?"▾":"▸"}</span>${esc(l)}</button>`;
+ let h='<h2>Spell Deck</h2><div id="msc"><div class="mrow"><button class="'+(page==="chars"?"on":"")+'" data-go="chars">Characters</button><button class="plus" data-newc="1" aria-label="New character">+</button></div>';
+ Object.entries(chars).forEach(([id,c])=>{const g="pc:"+id;
+  h+=tg(g,c.name)+(mopen.has(g)?`<div class="kids">${kid("class","Class",id)}${kid("feats","Feats",id)}${kid("species","Species",id)}${isCaster(c)?kid("spells","Spells",id):""}</div>`:"")});
+ h+='<div class="msep"></div>'+tg("ref","Reference")+(mopen.has("ref")?`<div class="kids">${kid("spells","Spells","")}${kid("feats","Feats","")}${kid("species","Species","")}${kid("class","Class","")}</div>`:"")+'</div>';
+ h+=`<button id="gear" class="${page==="settings"?"on":""}" data-go="settings" aria-label="Settings">⚙</button>`;
+ $("drawer").innerHTML=h}
+function nav(p,id){save();
+ if(id!==undefined){if(id)setCur(id);else noCur()}
+ if(p!=="chars"&&p!=="settings"){mopen.add(grp())}
+ page=p;$("q").value="";localStorage.setItem("mopen",JSON.stringify([...mopen]));menu(0);draw();scrollTo(0,0)}
+function openNew(){
+ const cl=D.classes.map(k=>`<option value="${esc(ckey(k))}">${esc(k.name)}${k.source!=="XPHB"?" ("+esc(k.source)+")":""}</option>`).join("");
+ const sp=D.species.map(p=>`<option value="${esc(p.key)}">${esc(p.name)}</option>`).join("");
+ const ft=D.feats.map(f=>`<label class="fl" data-n="${esc(f.name.toLowerCase())}"><input type="checkbox" value="${esc(f.key)}"> ${esc(f.name)} <small>${esc(f.cat)}</small></label>`).join("");
+ $("mod").innerHTML=`<div class="sheet"><h2>New character</h2><label>Name<input id="nn" type="text" placeholder="Character name" autocomplete="off"></label><label>Starting class (optional)<select id="nc"><option value="">None</option>${cl}</select></label><label>Species (optional)<select id="ns"><option value="">None</option>${sp}</select></label><details><summary>Feats (optional) <small id="nfc"></small></summary><input id="nf" type="search" placeholder="Filter feats…"><div class="fls">${ft||"<small>Feats haven't downloaded yet.</small>"}</div></details><div class="acts"><button data-mc="1">Cancel</button><button class="go" data-ok="1">Create</button></div></div>`;
+ menu(0);$("mod").classList.add("open");setTimeout(()=>{const n=$("nn");n&&n.focus()},50)}
+function createChar(){
+ const c={name:$("nn").value.trim()||"New Character"};fix(c);
+ const k=$("nc").value;if(k)c.classes[k]=1;
+ c.species=$("ns").value;
+ c.feats=[...document.querySelectorAll("#mod .fls input:checked")].map(x=>x.value);
+ save();const id="c"+Date.now();chars[id]=c;setCur(id);
+ $("mod").classList.remove("open");mopen.add("pc:"+id);
+ if(!k)sub.class="class";else delete sub.class;
+ nav("class")}
 const empty=t=>`<div class="empty">${t}</div>`;
-const who=()=>cur?`<p class="who">Character: <b>${esc(chars[cur].name)}</b></p>`:`<p class="who">No character selected: reference only</p>`;
+const who=()=>cur?`<p class="who">Character: <b>${esc(chars[cur].name)}</b></p>`:`<p class="who">Reference: nothing is saved here</p>`;
 const q=()=>$("q").value.toLowerCase().trim();
 const rail=a=>`<div class="rail">${a.join("")}</div>`;
 function gcard(o){return`<div class="card ${o.cls||""}"><h3>${esc(o.t)}</h3><div class="meta">${esc(o.meta||"")}</div>${o.dl&&o.dl.length?`<dl>${o.dl.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`:""}<div class="body">${o.body||""}</div><div class="ft"><span>${esc(o.foot||"")}</span>${o.btn||""}</div></div>`}
@@ -211,7 +259,8 @@ function tabsFor(){const c=C();
  return[["list",{spells:"Spell list",feats:"Feat list",species:"Species list"}[page]],["deck","Deck ("+n+")"]]}
 function curSub(){const t=tabsFor().map(x=>x[0]);let s=sub[page];if(!t.includes(s))s=t.includes("deck")?"deck":t[0]||"list";return s}
 function draw(){save();const tabs=tabsFor(),st=curSub();
- $("ttl").textContent=PAGES[page];
+ drawMenu();
+ $("ttl").textContent=page==="chars"||page==="settings"?PAGES[page]:(cur?chars[cur].name:"Reference")+" · "+PAGES[page];
  $("tabs").style.display=tabs.length?"flex":"none";
  $("tabs").innerHTML=tabs.map(([k,l])=>`<button class="tab ${k===st?"on":""}" data-st="${k}">${l}</button>`).join("");
  const lv=((page==="spells"||page==="feats"||page==="species")&&st==="list")||(page==="class"&&st==="class");
@@ -229,8 +278,8 @@ function view(st){
  return st==="deck"?classDeck():st==="sub"?classSubs():classList()}
 // characters / settings
 function charsView(){
- const r=(id,name,sub,x)=>`<div class="row"><input type="radio" name="act" data-act="${id}" ${(cur||"")===id?"checked":""}><span class="n"><b>${esc(name)}</b> <small>${esc(sub)}</small></span>${x?`<button data-rn="${id}">Rename</button><button data-del="${id}">Delete</button>`:""}</div>`;
- return'<p class="who">Tap the dot to choose the active character.</p>'+r("","None","reference only, no saved deck",0)+Object.entries(chars).map(([id,c])=>r(id,c.name,c.deck.length+" spells · "+c.feats.length+" feats"+(total(c)?" · level "+total(c):""),1)).join("")+'<p><button id="newc">+ New character</button></p>'}
+ const rows=Object.entries(chars).map(([id,c])=>`<div class="row"><span class="n"><button class="lnk" data-go="class" data-pc="${id}">${esc(c.name)}</button><br><small>${[total(c)?"level "+total(c):"",c.species?c.species.split("|")[0]:"",c.feats.length+" feats",c.deck.length+" spells"].filter(Boolean).join(" · ")}</small></span><button data-rn="${id}">Rename</button><button data-del="${id}">Delete</button></div>`).join("");
+ return(rows||empty("No characters yet."))+'<p><button data-newc="1">+ New character</button></p>'}
 function settingsView(){return`<div class="row"><span class="n">Night mode</span><input type="checkbox" id="nm" ${document.documentElement.dataset.theme==="dark"?"checked":""}></div><div class="row"><span class="n">5etools data <small>${counts()}</small></span><button id="upd">Update</button></div><p class="who">App version ${VER}</p>`}
 // spells
 function spellCard(s,x){return gcard({t:s.name,meta:`${ordl(s.level)} ${s.school.toLowerCase()}${s.ritual?" (ritual)":""}`,dl:[["Cast",s.time],["Range",s.range],["Comp.",s.comp],["Dur.",s.dur]],body:s.text,foot:s.classes.join(", ")+" · "+s.source,btn:x?rmBtn("rm",key(s)):""})}
@@ -289,28 +338,32 @@ function classDeck(){const c=C();let h=who()+`<p class="who">Total level: <b>${t
 // ---------- events ----------
 const keep=f=>{const y=scrollY;f();scrollTo(0,y)};
 document.addEventListener("toggle",e=>{const t=e.target;if(t.dataset&&t.dataset.g){if(t.open){og.add(t.dataset.g);cg.delete(t.dataset.g)}else{og.delete(t.dataset.g);cg.add(t.dataset.g)}}},true);
-document.addEventListener("click",e=>{const t=e.target,d=t.dataset;
+document.addEventListener("click",e=>{let t=e.target;const b=t.closest&&t.closest("button");if(b)t=b;const d=t.dataset;
  if(t.id==="mb")menu(1);else if(t.id==="ov")menu(0);
- else if(d.go){page=d.go;$("q").value="";menu(0);draw();scrollTo(0,0)}
+ else if(d.go)nav(d.go,d.pc)
+ else if(d.tg){mopen.has(d.tg)?mopen.delete(d.tg):mopen.add(d.tg);localStorage.setItem("mopen",JSON.stringify([...mopen]));drawMenu()}
+ else if(d.newc!==undefined)openNew()
+ else if(d.mc!==undefined||t.id==="mod")$("mod").classList.remove("open")
+ else if(d.ok!==undefined)createChar()
  else if(d.st){sub[page]=d.st;draw();scrollTo(0,0)}
  else if(t.id==="upd")init(true);
- else if(t.id==="newc"){const n=prompt("Character name?");if(n&&n.trim()){save();const id="c"+Date.now();chars[id]={name:n.trim()};fix(chars[id]);setCur(id);draw()}}
  else if(d.rn){const n=prompt("Rename character",chars[d.rn].name);if(n&&n.trim()){chars[d.rn].name=n.trim();draw()}}
- else if(d.del){if(confirm("Delete "+chars[d.del].name+" and everything saved for them?")){delete chars[d.del];if(cur===d.del)noCur();draw()}}
+ else if(d.del){if(confirm("Delete "+chars[d.del].name+" and everything saved for them?")){delete chars[d.del];mopen.delete("pc:"+d.del);if(cur===d.del){noCur();if(page!=="chars"&&page!=="settings")page="chars"}draw()}}
  else if(d.v)keep(()=>{open.has(d.v)?open.delete(d.v):open.add(d.v);draw()});
  else if(d.rm){sel.delete(d.rm);keep(draw)}
  else if(d.rf){fsel.delete(d.rf);keep(draw)}
  else if(d.clr){C().species="";draw()}
  else if(d.lv){const c=C();if(c&&!(+d.d>0&&total(c)>=20)){c.classes[d.lv]=Math.max(0,(c.classes[d.lv]||0)+ +d.d);keep(draw)}}});
 document.addEventListener("change",e=>{const t=e.target,d=t.dataset;
- if(d.act!==undefined){save();if(d.act)setCur(d.act);else noCur();draw()}
- else if(d.k){t.checked?sel.add(d.k):sel.delete(d.k);save()}
+ if(d.k){t.checked?sel.add(d.k):sel.delete(d.k);save()}
  else if(d.kf){t.checked?fsel.add(d.kf):fsel.delete(d.kf);save()}
  else if(d.spc){C().species=d.spc;save()}
  else if(d.sc){C().subs[d.sc]=d.sv;save()}
  else if(t.id==="nm")setTh(t.checked?"dark":"light");
  else if(t.id==="sort"||t.id==="cls"||t.id==="cat")draw()});
 $("q").addEventListener("input",draw);
+document.addEventListener("input",e=>{const t=e.target;if(t.id==="nf"){const v=t.value.toLowerCase();document.querySelectorAll("#mod .fl").forEach(l=>l.style.display=l.dataset.n.includes(v)?"":"none")}});
+document.addEventListener("change",e=>{if(e.target.closest&&e.target.closest("#mod .fls")){const n=document.querySelectorAll("#mod .fls input:checked").length;$("nfc").textContent=n?"("+n+" chosen)":""}});
 draw();init();
 if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 </script></body></html>
