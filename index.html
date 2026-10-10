@@ -2,6 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Spell Deck</title>
+<script>try{var z=parseFloat(localStorage.getItem("fs"));if(z>=.8&&z<=1.8)document.documentElement.style.setProperty("--fs",z)}catch(e){}</script>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#7a1f1f">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -10,52 +11,55 @@
 <link rel="apple-touch-icon" href="icons/icon-180.png?v=2">
 <link rel="icon" href="icons/icon-192.png?v=2">
 <style>
-:root{--bg:#f4efe6;--fg:#2b2118;--card:#fffaf0;--ac:#7a1f1f;--ac2:#2f6b8a;--mut:#8a7b68;--bd:#d8cbb4}
+:root{--fs:1;--bg:#f4efe6;--fg:#2b2118;--card:#fffaf0;--ac:#7a1f1f;--ac2:#2f6b8a;--mut:#8a7b68;--bd:#d8cbb4}
 :root[data-theme=dark]{color-scheme:dark;--bg:#14110e;--fg:#eee4d2;--card:#241e18;--ac:#e07a68;--ac2:#6fb0d0;--mut:#a89983;--bd:#3d342a}
-*{box-sizing:border-box}body{margin:0;font:16px Georgia,serif;background:var(--bg);color:var(--fg)}
+*{box-sizing:border-box}body{margin:0;font-family:Georgia,serif;font-size:calc(16px*var(--fs));background:var(--bg);color:var(--fg)}
 header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--bd);padding:8px 12px;z-index:5}
 .tabs{display:flex;gap:8px;margin-bottom:8px}
 button,select,input{font:inherit;color:inherit;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:7px 10px}
 button:disabled{opacity:.35}
 .tab{flex:1;font-weight:bold;padding:7px 4px}.tab.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 .bar{display:flex;gap:6px;flex-wrap:wrap}.bar input{flex:1;min-width:120px}
-#st{font-size:12px;color:var(--mut);margin-top:6px}
+#st{font-size:calc(12px*var(--fs));color:var(--mut);margin-top:6px}
 main{padding:10px 12px 60px;max-width:1100px;margin:auto}
 .row{flex-wrap:wrap;display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--bd)}
 .row input{width:20px;height:20px;accent-color:var(--ac);padding:0}.row .n{flex:1}.row small{color:var(--mut)}
 .row b{min-width:22px;text-align:center}
 .row .v{background:none;border:none;color:var(--ac);padding:4px}
 .rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 14px;margin-bottom:6px}.rail .card{scroll-snap-align:start}
-.card{background:var(--card);border:2px solid var(--ac);border-radius:12px;padding:12px;display:flex;flex-direction:column;width:300px;height:480px;flex:none;max-width:100%}
+.card{background:var(--card);border:2px solid var(--ac);border-radius:12px;padding:12px;display:flex;flex-direction:column;width:calc(300px*var(--fs));height:calc(480px*var(--fs));flex:none;max-width:100%}
 .card.sub{border-color:var(--ac2)}.card.sub h3{color:var(--ac2)}
-.card h3{margin:0;color:var(--ac)}.card .meta{font-style:italic;color:var(--mut);font-size:13px;margin-bottom:6px}
-.card dl{margin:0 0 6px;font-size:13px;display:grid;grid-template-columns:auto 1fr;gap:1px 8px;border-block:1px solid var(--bd);padding:5px 0}
+.card h3{margin:0;color:var(--ac)}.card .meta{font-style:italic;color:var(--mut);font-size:calc(13px*var(--fs));margin-bottom:6px}
+.card dl{margin:0 0 6px;font-size:calc(13px*var(--fs));display:grid;grid-template-columns:auto 1fr;gap:1px 8px;border-block:1px solid var(--bd);padding:5px 0}
 .card dt{font-weight:bold}.card dd{margin:0}
-.body{min-height:0;overflow:auto;font-size:14px;flex:1}.body p{margin:0 0 6px}
-.card .ft{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mut);margin-top:6px;gap:6px}
-.top{display:flex;align-items:center;gap:10px;margin-bottom:8px}.top b{font-size:18px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#mb{font-size:20px;padding:4px 12px}
+.body{min-height:0;overflow:auto;font-size:calc(14px*var(--fs));flex:1}.body p{margin:0 0 6px}
+.card .ft{display:flex;justify-content:space-between;align-items:center;font-size:calc(12px*var(--fs));color:var(--mut);margin-top:6px;gap:6px}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:8px}.top b{font-size:calc(18px*var(--fs));flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#mb{font-size:calc(20px*var(--fs));padding:4px 12px}
 #ov{position:fixed;inset:0;background:#0006;z-index:9;display:none}#ov.open{display:block}
-#drawer{position:fixed;top:0;bottom:0;left:0;width:290px;max-width:85%;background:var(--bg);border-right:1px solid var(--bd);z-index:10;transform:translateX(-105%);transition:transform .2s;display:flex;flex-direction:column}
+#drawer{position:fixed;top:0;bottom:0;left:0;width:calc(290px*var(--fs));max-width:85%;background:var(--bg);border-right:1px solid var(--bd);z-index:10;transform:translateX(-105%);transition:transform .2s;display:flex;flex-direction:column}
 #drawer.open{transform:none}#drawer h2{margin:0;padding:16px 14px 8px;color:var(--ac)}
 #msc{flex:1;overflow-y:auto;padding:0 8px}
-#drawer button{text-align:left;font-size:17px;padding:11px 12px;border:none;background:none;width:100%;border-radius:8px}
+#drawer button{text-align:left;font-size:calc(17px*var(--fs));padding:11px 12px;border:none;background:none;width:100%;border-radius:8px}
 #drawer button.on{background:var(--ac);color:#fff}
-.mrow{display:flex;align-items:center}#drawer .mrow .mh{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#drawer .mrow .edit{width:auto;flex:none;font-size:14px;padding:6px 12px;margin-right:4px;border:1px solid var(--bd);color:var(--ac)}
-#drawer .newc{display:flex;justify-content:space-between;align-items:center;font-weight:bold}#drawer .newc span{font-size:22px;line-height:1;color:var(--ac)}
+.mrow{display:flex;align-items:center}#drawer .mrow .mh{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#drawer .mrow .edit{width:auto;flex:none;font-size:calc(14px*var(--fs));padding:6px 12px;margin-right:4px;border:1px solid var(--bd);color:var(--ac)}
+#drawer .newc{display:flex;justify-content:space-between;align-items:center;font-weight:bold}#drawer .newc span{font-size:calc(22px*var(--fs));line-height:1;color:var(--ac)}
 .mh{font-weight:bold}.car{display:inline-block;width:18px;color:var(--mut)}
-.kids{margin:0 0 6px 20px;border-left:2px solid var(--bd);padding-left:6px}.kids button{font-size:16px;padding:9px 10px}
+.kids{margin:0 0 6px 20px;border-left:2px solid var(--bd);padding-left:6px}.kids button{font-size:calc(16px*var(--fs));padding:9px 10px}
 .msep{border-top:1px solid var(--bd);margin:8px 4px}
-#drawer #gear{width:46px;height:46px;font-size:24px;margin:8px;padding:0;text-align:center;border:1px solid var(--bd);background:var(--card);flex:none}
+#drawer #gear{width:46px;height:46px;font-size:calc(24px*var(--fs));margin:8px;padding:0;text-align:center;border:1px solid var(--bd);background:var(--card);flex:none}
 #drawer #gear.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 #mod{position:fixed;inset:0;background:#0008;z-index:20;display:none;align-items:center;justify-content:center;padding:12px}#mod.open{display:flex}
 .sheet{background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:16px;width:100%;max-width:420px;max-height:90vh;overflow:auto}
-.sheet h2{margin:0 0 10px;color:var(--ac)}.sheet label{display:block;font-size:14px;color:var(--mut)}
-.sheet input[type=text],.sheet input[type=search],.sheet select{width:100%;margin:4px 0 12px;font-size:16px}
-.sheet summary{padding:8px 0;font-size:15px}.fls{max-height:220px;overflow:auto;border:1px solid var(--bd);border-radius:8px;padding:4px 8px;margin-top:6px}
-.fl{display:flex!important;align-items:center;gap:8px;padding:5px 0;color:var(--fg)!important;font-size:15px!important}.fl input{width:auto;margin:0}
+.sheet h2{margin:0 0 10px;color:var(--ac)}.sheet label{display:block;font-size:calc(14px*var(--fs));color:var(--mut)}
+.sheet input[type=text],.sheet input[type=search],.sheet select{width:100%;margin:4px 0 12px}
+.sheet summary{padding:8px 0;font-size:calc(15px*var(--fs))}.fls{max-height:220px;overflow:auto;border:1px solid var(--bd);border-radius:8px;padding:4px 8px;margin-top:6px}
+.fl{display:flex!important;align-items:center;gap:8px;padding:5px 0;color:var(--fg)!important;font-size:calc(15px*var(--fs))!important}.fl input{width:auto;margin:0}
 .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}.acts .go{background:var(--ac);color:#fff;border-color:var(--ac)}
 .acts .danger{margin-right:auto;color:#c0392b;border-color:#c0392b}
 .col{display:flex;flex-direction:column;gap:12px;padding-bottom:14px}.col .card{width:100%;height:auto;max-width:none}.col .body{overflow:visible}
+
+.fsz{width:auto!important;margin:0!important}
+input[type=search],input[type=text],select{font-size:max(16px,1em)}
 </style></head><body>
 <header>
 <div class="top"><button id="mb" aria-label="Menu">☰</button><b id="ttl">Spells</b></div>
@@ -79,7 +83,7 @@ const SRC=["PHB","DMG","EEPC","SCAG","VGM","MTF","GGR","ERLW","AI","TCE","MOT","
 const CAT={G:"General",O:"Origin",FS:"Fighting Style","FS:P":"Fighting Style (Paladin)","FS:R":"Fighting Style (Ranger)",EB:"Epic Boon",D:"Dragonmark",DG:"Dark Gift"};
 const PAGES={spells:"Spells",feats:"Feats",species:"Species",class:"Class",settings:"Settings"};
 const $=s=>document.getElementById(s);
-const DV=5,VER=10;
+const DV=5,VER=11;
 let D={spells:[],feats:[],species:[],classes:[]},page=localStorage.getItem("page")||"spells",sub=JSON.parse(localStorage.getItem("sub")||"{}"),open=new Set(),og=new Set(),cg=new Set();
 if(!PAGES[page])page="spells";
 let mopen=new Set(JSON.parse(localStorage.getItem("mopen")||"null")||["ref"]);
@@ -281,7 +285,9 @@ function view(st){
  if(page==="species")return cur?speciesDeck():speciesList();
  return st==="deck"?classDeck():st==="sub"?classSubs():classList()}
 // characters / settings
-function settingsView(){return`<div class="row"><span class="n">Night mode</span><input type="checkbox" id="nm" ${document.documentElement.dataset.theme==="dark"?"checked":""}></div><div class="row"><span class="n">5etools data <small>${counts()}</small></span><button id="upd">Update</button></div><p class="who">App version ${VER}</p>`}
+const FSZ=[["0.9","Small"],["1","Normal"],["1.15","Large"],["1.3","Larger"],["1.5","Largest"]];
+function curFs(){let z="1";try{z=localStorage.getItem("fs")||"1"}catch(e){}return z}
+function settingsView(){const z=curFs();return`<div class="row"><span class="n">Text size</span><select id="fsz" class="fsz">${FSZ.map(([v,l])=>`<option value="${v}" ${v===z?"selected":""}>${l}</option>`).join("")}</select></div><div class="row"><span class="n">Night mode</span><input type="checkbox" id="nm" ${document.documentElement.dataset.theme==="dark"?"checked":""}></div><div class="row"><span class="n">5etools data <small>${counts()}</small></span><button id="upd">Update</button></div><p class="who">App version ${VER}</p>`}
 // spells
 function spellCard(s,x){return gcard({t:s.name,meta:`${ordl(s.level)} ${s.school.toLowerCase()}${s.ritual?" (ritual)":""}`,dl:[["Cast",s.time],["Range",s.range],["Comp.",s.comp],["Dur.",s.dur]],body:s.text,foot:s.classes.join(", ")+" · "+s.source,btn:x?rmBtn("rm",key(s)):""})}
 function spellList(){const c=$("cls").value,t=q(),lv=$("sort").value==="lvl";
@@ -361,6 +367,7 @@ document.addEventListener("change",e=>{const t=e.target,d=t.dataset;
  else if(d.kf){t.checked?fsel.add(d.kf):fsel.delete(d.kf);save()}
 
  else if(d.sc){C().subs[d.sc]=d.sv;save()}
+ else if(t.id==="fsz"){document.documentElement.style.setProperty("--fs",t.value);try{localStorage.setItem("fs",t.value)}catch(e){}}
  else if(t.id==="nm")setTh(t.checked?"dark":"light");
  else if(t.id==="sort"||t.id==="cls"||t.id==="cat")draw()});
 $("q").addEventListener("input",draw);
