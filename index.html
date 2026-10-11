@@ -27,9 +27,11 @@ main{padding:10px 12px 60px;max-width:1100px;margin:auto}
 .row b{min-width:22px;text-align:center}
 .row .v{background:none;border:none;color:var(--ac);padding:4px}
 .rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 14px;margin-bottom:6px}.rail .card{scroll-snap-align:start}
-.card{background:var(--card);border:2px solid var(--ac);border-radius:12px;padding:12px;display:flex;flex-direction:column;width:calc(300px*var(--fs));height:calc(480px*var(--fs));flex:none;max-width:100%}
-.card.sub{border-color:var(--ac2)}.card.sub h3{color:var(--ac2)}
-.card h3{margin:0;color:var(--ac)}.card .meta{font-style:italic;color:var(--mut);font-size:calc(13px*var(--fs));margin-bottom:6px}
+.card{position:relative;overflow:hidden;background:var(--card);background:linear-gradient(155deg,var(--card) 55%,color-mix(in srgb,var(--card) 82%,var(--cc,var(--ac))));border:2px solid var(--cc,var(--ac));box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px var(--cc,var(--ac)),0 3px 8px #0003;border-radius:14px;padding:16px;display:flex;flex-direction:column;width:calc(300px*var(--fs));height:calc(480px*var(--fs));flex:none;max-width:100%}
+.card.sub{border-style:double;border-width:5px;padding:13px}
+.card>*:not(.wm){position:relative;z-index:1}
+.wm{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.21;color:var(--cc,var(--ac));pointer-events:none}.wm svg{width:80%;max-height:82%}
+.card h3{margin:0 0 2px;color:var(--cc,var(--ac));border-bottom:1px solid var(--bd);padding-bottom:3px}.card .meta{font-style:italic;color:var(--mut);font-size:calc(13px*var(--fs));margin-bottom:6px}
 .card dl{margin:0 0 6px;font-size:calc(13px*var(--fs));display:grid;grid-template-columns:auto 1fr;gap:1px 8px;border-block:1px solid var(--bd);padding:5px 0}
 .card dt{font-weight:bold}.card dd{margin:0}
 .body{min-height:0;overflow:auto;font-size:calc(14px*var(--fs));flex:1}.body p{margin:0 0 6px}
@@ -56,7 +58,7 @@ main{padding:10px 12px 60px;max-width:1100px;margin:auto}
 .fl{display:flex!important;align-items:center;gap:8px;padding:5px 0;color:var(--fg)!important;font-size:calc(15px*var(--fs))!important}.fl input{width:auto;margin:0}
 .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}.acts .go{background:var(--ac);color:#fff;border-color:var(--ac)}
 .acts .danger{margin-right:auto;color:#c0392b;border-color:#c0392b}
-.col{display:flex;flex-direction:column;gap:12px;padding-bottom:14px}.col .card{width:100%;height:auto;max-width:none}.col .body{overflow:visible}
+.col{display:flex;flex-direction:column;gap:14px;padding-bottom:14px;max-width:680px}.col .card{width:100%;height:auto;max-width:none}.col .body{overflow:visible}
 
 .fsz{width:auto!important;margin:0!important}
 input[type=search],input[type=text],select{font-size:max(16px,1em)}
@@ -83,7 +85,7 @@ const SRC=["PHB","DMG","EEPC","SCAG","VGM","MTF","GGR","ERLW","AI","TCE","MOT","
 const CAT={G:"General",O:"Origin",FS:"Fighting Style","FS:P":"Fighting Style (Paladin)","FS:R":"Fighting Style (Ranger)",EB:"Epic Boon",D:"Dragonmark",DG:"Dark Gift"};
 const PAGES={spells:"Spells",feats:"Feats",species:"Species",class:"Class",settings:"Settings"};
 const $=s=>document.getElementById(s);
-const DV=5,VER=11;
+const DV=5,VER=12;
 let D={spells:[],feats:[],species:[],classes:[]},page=localStorage.getItem("page")||"spells",sub=JSON.parse(localStorage.getItem("sub")||"{}"),open=new Set(),og=new Set(),cg=new Set();
 if(!PAGES[page])page="spells";
 let mopen=new Set(JSON.parse(localStorage.getItem("mopen")||"null")||["ref"]);
@@ -129,6 +131,36 @@ if(e.type==="table")return(e.caption?"<p><i>"+esc(clean(e.caption))+"</i></p>":"
 return(e.name?"<p><b>"+esc(clean(e.name))+".</b></p>":"")+render(e.entries||e.entry||"")}
 const ordl=l=>l===0?"Cantrip":l+(["st","nd","rd"][l-1]||"th")+"-level";
 const lvlName=l=>l===0?"Cantrips":"Level "+l;
+// ---------- symbols ----------
+const svg=p=>'<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
+const rays=(n,r1,r2)=>Array.from({length:n},(_,i)=>{const a=i*2*Math.PI/n,c=Math.cos(a),s=Math.sin(a);return"M"+(32+r1*c).toFixed(1)+" "+(32+r1*s).toFixed(1)+"L"+(32+r2*c).toFixed(1)+" "+(32+r2*s).toFixed(1)}).join("");
+const gearPath=(n,ri,ro)=>{let d="";const p=2*Math.PI/n;for(let i=0;i<n;i++){[[-.30,ri],[-.17,ro],[.17,ro],[.30,ri]].forEach(([k,r],j)=>{const t=i*p+k*p;d+=(i+j?"L":"M")+(32+r*Math.cos(t)).toFixed(1)+" "+(32+r*Math.sin(t)).toFixed(1)})}return d+"Z"};
+const SPARK='<path d="M32 6C34 24 40 30 58 32 40 34 34 40 32 58 30 40 24 34 6 32 24 30 30 24 32 6Z"/>';
+const ICON={
+ Abjuration:svg('<path d="M32 6L54 14V32C54 46 44 56 32 60 20 56 10 46 10 32V14Z"/><path d="M32 16V50M20 28H44"/>'),
+ Conjuration:svg('<path d="M32 8A24 24 0 1 1 8 32"/><path d="M32 19A13 13 0 1 1 19 32"/><circle cx="32" cy="32" r="3" fill="currentColor"/>'),
+ Divination:svg('<path d="M4 32C14 14 50 14 60 32 50 50 14 50 4 32Z"/><circle cx="32" cy="32" r="9"/><circle cx="32" cy="32" r="3" fill="currentColor"/>'),
+ Enchantment:svg('<path d="M32 56C10 40 6 26 12 18 18 10 28 12 32 20 36 12 46 10 52 18 58 26 54 40 32 56Z"/>'),
+ Evocation:svg('<path d="M32 6C34 18 48 24 48 38 48 50 40 58 32 58 22 58 16 50 16 40 16 32 22 28 24 20 28 24 30 26 32 6Z"/><path d="M32 58C26 54 26 46 32 40 38 46 38 54 32 58Z"/>'),
+ Illusion:svg('<circle cx="23" cy="32" r="16"/><circle cx="41" cy="32" r="16"/>'),
+ Necromancy:svg('<path d="M32 6C18 6 10 16 10 28 10 36 14 40 18 42V52H46V42C50 40 54 36 54 28 54 16 46 6 32 6Z"/><circle cx="24" cy="30" r="5"/><circle cx="40" cy="30" r="5"/><path d="M32 36L29 44H35ZM26 52V47M32 52V47M38 52V47"/>'),
+ Transmutation:svg('<path d="M12 30A20 20 0 0 1 48 20M50 8V22H36"/><path d="M52 34A20 20 0 0 1 16 44M14 56V42H28"/>'),
+ Artificer:svg('<path d="'+gearPath(8,17,26)+'"/><circle cx="32" cy="32" r="7"/>'),
+ Barbarian:svg('<path d="M32 8V58"/><path d="M32 14C20 10 10 16 8 26 18 28 26 26 32 24"/><path d="M32 14C44 10 54 16 56 26 46 28 38 26 32 24"/>'),
+ Bard:svg('<path d="M38 8V44"/><ellipse cx="28" cy="46" rx="10" ry="7"/><path d="M38 8C46 12 52 20 50 30"/>'),
+ Cleric:svg('<circle cx="32" cy="32" r="11"/><path d="'+rays(8,17,27)+'"/>'),
+ Druid:svg('<path d="M10 54C10 26 28 10 54 10 54 36 40 56 10 54Z"/><path d="M10 54L40 24"/>'),
+ Fighter:svg('<path d="M14 54L52 10M18.5 36.5L30.7 46.9M50 54L12 10M45.5 36.5L33.3 46.9"/>'),
+ Monk:svg('<circle cx="32" cy="32" r="23"/><path d="M32 9C18 20 46 44 32 55"/><circle cx="32" cy="20" r="3" fill="currentColor"/><circle cx="32" cy="44" r="3" fill="currentColor"/>'),
+ Paladin:svg('<path d="M32 6L54 14V32C54 46 44 56 32 60 20 56 10 46 10 32V14Z"/><g transform="translate(0 -2)"><circle cx="32" cy="32" r="6"/><path d="'+rays(8,10,16)+'"/></g>'),
+ Ranger:svg('<path d="M20 8C44 20 44 44 20 56M20 8V56"/><path d="M8 32H56M56 32L47 25M56 32L47 39"/>'),
+ Rogue:svg('<path d="M32 6L39 34H25Z"/><path d="M19 34H45M32 34V50"/><circle cx="32" cy="55" r="4"/>'),
+ Sorcerer:svg(SPARK),
+ Warlock:svg('<circle cx="32" cy="32" r="24"/><path d="M32 10L44.9 49.8 11.1 25.2H52.9L19.1 49.8Z"/>'),
+ Wizard:svg('<path d="M30 8C34 20 42 36 48 46H16C22 36 28 22 30 8Z"/><ellipse cx="32" cy="50" rx="26" ry="7"/><circle cx="31" cy="30" r="2.5" fill="currentColor"/>'),
+ _:svg(SPARK)};
+const COL={Abjuration:"#3b6fb6",Conjuration:"#b8860b",Divination:"#5f5bc4",Enchantment:"#c2528b",Evocation:"#d2562b",Illusion:"#7b4fa8",Necromancy:"#3f8a5a",Transmutation:"#8a6d3b",
+ Artificer:"#a0652a",Barbarian:"#c0392b",Bard:"#b5589b",Cleric:"#c9a227",Druid:"#4f8a3c",Fighter:"#8c6d4f",Monk:"#2f8f9d",Paladin:"#d4a017",Ranger:"#3f7f4f",Rogue:"#5b5b6e",Sorcerer:"#cc3355",Warlock:"#7b3fa0",Wizard:"#3a60b5"};
 // ---------- data processing ----------
 function slim(s,lookup){
  const cl=new Set(),lk=lookup&&lookup[s.source.toLowerCase()]?.[s.name.toLowerCase()];
@@ -258,7 +290,7 @@ const empty=t=>`<div class="empty">${t}</div>`;
 const who=()=>cur?`<p class="who">Character: <b>${esc(chars[cur].name)}</b></p>`:`<p class="who">Reference: nothing is saved here</p>`;
 const q=()=>$("q").value.toLowerCase().trim();
 const rail=a=>`<div class="rail">${a.join("")}</div>`;
-function gcard(o){return`<div class="card ${o.cls||""}"><h3>${esc(o.t)}</h3><div class="meta">${esc(o.meta||"")}</div>${o.dl&&o.dl.length?`<dl>${o.dl.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`:""}<div class="body">${o.body||""}</div><div class="ft"><span>${esc(o.foot||"")}</span>${o.btn||""}</div></div>`}
+function gcard(o){return`<div class="card ${o.cls||""}"${o.cc?` style="--cc:${o.cc}"`:""}>${o.wm?`<div class="wm">${o.wm}</div>`:""}<h3>${esc(o.t)}</h3><div class="meta">${esc(o.meta||"")}</div>${o.dl&&o.dl.length?`<dl>${o.dl.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`:""}<div class="body">${o.body||""}</div><div class="ft"><span>${esc(o.foot||"")}</span>${o.btn||""}</div></div>`}
 function row(o){return`<div class="row">${o.in||""}<span class="n">${esc(o.n)} <small>${esc(o.s||"")}</small></span>${o.x||""}<button class="v" data-v="${esc(o.k)}">${open.has(o.k)?"Hide":"View"}</button></div>`+(open.has(o.k)?`<div style="padding:8px 0">${o.c()}</div>`:"")}
 const rmBtn=(a,k)=>`<button data-${a}="${esc(k)}">Remove</button>`;
 function tabsFor(){const c=C();
@@ -287,9 +319,9 @@ function view(st){
 // characters / settings
 const FSZ=[["0.9","Small"],["1","Normal"],["1.15","Large"],["1.3","Larger"],["1.5","Largest"]];
 function curFs(){let z="1";try{z=localStorage.getItem("fs")||"1"}catch(e){}return z}
-function settingsView(){const z=curFs();return`<div class="row"><span class="n">Text size</span><select id="fsz" class="fsz">${FSZ.map(([v,l])=>`<option value="${v}" ${v===z?"selected":""}>${l}</option>`).join("")}</select></div><div class="row"><span class="n">Night mode</span><input type="checkbox" id="nm" ${document.documentElement.dataset.theme==="dark"?"checked":""}></div><div class="row"><span class="n">5etools data <small>${counts()}</small></span><button id="upd">Update</button></div><p class="who">App version ${VER}</p>`}
+function settingsView(){const z=curFs();return`<div class="row"><span class="n">Text size</span><select id="fsz" class="fsz">${FSZ.map(([v,l])=>`<option value="${v}" ${v===z?"selected":""}>${l}</option>`).join("")}</select></div><div class="row"><span class="n">Group feats by category <small>(Origin, General…)</small></span><input type="checkbox" id="fgrp" ${fgrp()?"checked":""}></div><div class="row"><span class="n">Night mode</span><input type="checkbox" id="nm" ${document.documentElement.dataset.theme==="dark"?"checked":""}></div><div class="row"><span class="n">5etools data <small>${counts()}</small></span><button id="upd">Update</button></div><p class="who">App version ${VER}</p>`}
 // spells
-function spellCard(s,x){return gcard({t:s.name,meta:`${ordl(s.level)} ${s.school.toLowerCase()}${s.ritual?" (ritual)":""}`,dl:[["Cast",s.time],["Range",s.range],["Comp.",s.comp],["Dur.",s.dur]],body:s.text,foot:s.classes.join(", ")+" · "+s.source,btn:x?rmBtn("rm",key(s)):""})}
+function spellCard(s,x){return gcard({wm:ICON[s.school],cc:COL[s.school],t:s.name,meta:`${ordl(s.level)} ${s.school.toLowerCase()}${s.ritual?" (ritual)":""}`,dl:[["Cast",s.time],["Range",s.range],["Comp.",s.comp],["Dur.",s.dur]],body:s.text,foot:s.classes.join(", ")+" · "+s.source,btn:x?rmBtn("rm",key(s)):""})}
 function spellList(){const c=$("cls").value,t=q(),lv=$("sort").value==="lvl";
  const a=D.spells.filter(s=>(!c||s.classes.includes(c))&&s.name.toLowerCase().includes(t)).sort(lv?(x,y)=>x.level-y.level||x.name.localeCompare(y.name):(x,y)=>x.name.localeCompare(y.name));
  let last=null,h=who();
@@ -305,10 +337,12 @@ function featCard(f,x){return gcard({t:f.name,meta:[f.cat,f.pre&&"Prerequisite: 
 function featList(){const c=$("cat").value,t=q();
  const a=D.feats.filter(f=>(!c||f.cat===c)&&f.name.toLowerCase().includes(t)).sort((x,y)=>x.name.localeCompare(y.name));
  return who()+a.map(f=>row({k:"f:"+f.key,in:cur?`<input type="checkbox" data-kf="${esc(f.key)}" ${fsel.has(f.key)?"checked":""}>`:"",n:f.name,s:f.cat+" · "+f.source,c:()=>featCard(f)})).join("")+(a.length?"":empty(D.feats.length?"No matches.":"Loading…"))}
-function featDeck(){const a=D.feats.filter(f=>fsel.has(f.key)).sort((x,y)=>x.cat.localeCompare(y.cat)||x.name.localeCompare(y.name));
+const fgrp=()=>{try{return localStorage.getItem("fgrp")==="1"}catch(e){return false}};
+function featDeck(){const g=fgrp(),a=D.feats.filter(f=>fsel.has(f.key)).sort(g?(x,y)=>x.cat.localeCompare(y.cat)||x.name.localeCompare(y.name):(x,y)=>x.name.localeCompare(y.name));
  if(!a.length)return who()+empty("No feats yet. Pick some on the Feat list tab.");
+ if(!g)return who()+col(a.map(f=>featCard(f,1)));
  const by={};a.forEach(f=>(by[f.cat]=by[f.cat]||[]).push(f));
- return who()+Object.keys(by).map(k=>`<h3 class="hi">${esc(k)} (${by[k].length})</h3>`+rail(by[k].map(f=>featCard(f,1)))).join("")}
+ return who()+Object.keys(by).map(k=>`<h3 class="hi">${esc(k)} (${by[k].length})</h3>`+col(by[k].map(f=>featCard(f,1)))).join("")}
 // species
 function spCards(p){return[gcard({t:p.name,meta:"Species",dl:[["Size",p.size],["Speed",p.speed]].filter(x=>x[1]),body:p.notes,foot:p.source})].concat(p.traits.map(t=>gcard({t:t.name,meta:p.name,body:t.text,foot:p.source})))}
 const col=a=>`<div class="col">${a.join("")}</div>`;
@@ -319,7 +353,7 @@ function speciesDeck(){const c=C(),p=D.species.find(x=>x.key===c.species);
  if(!p)return who()+empty("No species chosen. Use Edit on the character in the menu to pick one.");
  return who()+`<h3 class="hi">${esc(p.name)}</h3>`+col(spCards(p))}
 // classes
-const fcard=(f,owner,sub)=>gcard({t:f.name,meta:"Level "+f.level+" · "+owner,body:f.text,foot:owner,cls:sub?"sub":""});
+const fcard=(f,owner,sub,cn)=>gcard({wm:ICON[cn||owner]||ICON._,cc:COL[cn||owner],t:f.name,meta:"Level "+f.level+" · "+owner,body:f.text,foot:owner,cls:sub?"sub":""});
 const byLvl=a=>a.slice().sort((x,y)=>x.level-y.level||x.name.localeCompare(y.name));
 function classList(){const c=C(),t=q();let h=who();const tot=c?total(c):0;
  if(c)h+=`<p class="who">Total level: <b>${tot}</b> / 20</p>`;
@@ -334,14 +368,14 @@ function classSubs(){const c=C();let h=who();
   h+=`<details data-g="${esc(id)}" ${isOpen?"open":""}><summary><b>${esc(k.name)}</b>${c?" · level "+c.classes[ck]:""}</summary>`;
   if(c)h+=`<div class="row"><input type="radio" name="r${i}" data-sc="${esc(ck)}" data-sv="" ${c.subs[ck]?"":"checked"}><span class="n">None yet</span></div>`;
   h+=k.subs.map(s=>{const sv=s.short+"|"+s.source;
-   return row({k:"u:"+ck+"|"+sv,in:c?`<input type="radio" name="r${i}" data-sc="${esc(ck)}" data-sv="${esc(sv)}" ${c.subs[ck]===sv?"checked":""}>`:"",n:s.name,s:s.source,c:()=>s.features.length?rail(byLvl(s.features).map(f=>fcard(f,s.name,1))):empty("No features found.")})}).join("")+(k.subs.length?"":empty("No subclasses."))+"</details>"});
+   return row({k:"u:"+ck+"|"+sv,in:c?`<input type="radio" name="r${i}" data-sc="${esc(ck)}" data-sv="${esc(sv)}" ${c.subs[ck]===sv?"checked":""}>`:"",n:s.name,s:s.source,c:()=>s.features.length?rail(byLvl(s.features).map(f=>fcard(f,s.name,1,k.name))):empty("No features found.")})}).join("")+(k.subs.length?"":empty("No subclasses."))+"</details>"});
  return h}
 function classDeck(){const c=C();let h=who()+`<p class="who">Total level: <b>${total(c)}</b> / 20</p>`;
  const list=D.classes.filter(k=>(c.classes[ckey(k)]||0)>0);
  if(!list.length)return h+empty("No classes yet. Add levels on the Class tab.");
  list.forEach(k=>{const ck=ckey(k),lv=c.classes[ck],sv=c.subs[ck],s=sv&&k.subs.find(x=>x.short+"|"+x.source===sv);
-  const cards=byLvl(k.features.filter(f=>f.level<=lv).map(f=>({...f,own:0})).concat(s?s.features.filter(f=>f.level<=lv).map(f=>({...f,own:1})):[])).map(f=>f.own?fcard(f,s.name,1):fcard(f,k.name));
-  h+=`<h3 class="hi">${esc(k.name)} ${lv}${s?" · "+esc(s.name):""}</h3>`+(cards.length?rail(cards):empty("No features at this level."))});
+  const cards=byLvl(k.features.filter(f=>f.level<=lv).map(f=>({...f,own:0})).concat(s?s.features.filter(f=>f.level<=lv).map(f=>({...f,own:1})):[])).map(f=>f.own?fcard(f,s.name,1,k.name):fcard(f,k.name));
+  h+=`<h3 class="hi">${esc(k.name)} ${lv}${s?" · "+esc(s.name):""}</h3>`+(cards.length?(list.length===1?col(cards):rail(cards)):empty("No features at this level."))});
  return h}
 // ---------- events ----------
 const keep=f=>{const y=scrollY;f();scrollTo(0,y)};
@@ -368,6 +402,7 @@ document.addEventListener("change",e=>{const t=e.target,d=t.dataset;
 
  else if(d.sc){C().subs[d.sc]=d.sv;save()}
  else if(t.id==="fsz"){document.documentElement.style.setProperty("--fs",t.value);try{localStorage.setItem("fs",t.value)}catch(e){}}
+ else if(t.id==="fgrp"){try{localStorage.setItem("fgrp",t.checked?"1":"0")}catch(e){}}
  else if(t.id==="nm")setTh(t.checked?"dark":"light");
  else if(t.id==="sort"||t.id==="cls"||t.id==="cat")draw()});
 $("q").addEventListener("input",draw);
