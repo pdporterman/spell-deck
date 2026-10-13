@@ -85,7 +85,7 @@ const SRC=["PHB","DMG","EEPC","SCAG","VGM","MTF","GGR","ERLW","AI","TCE","MOT","
 const CAT={G:"General",O:"Origin",FS:"Fighting Style","FS:P":"Fighting Style (Paladin)","FS:R":"Fighting Style (Ranger)",EB:"Epic Boon",D:"Dragonmark",DG:"Dark Gift"};
 const PAGES={spells:"Spells",feats:"Feats",species:"Species",class:"Class",settings:"Settings"};
 const $=s=>document.getElementById(s);
-const DV=5,VER=12;
+const DV=6,VER=13;
 let D={spells:[],feats:[],species:[],classes:[]},page=localStorage.getItem("page")||"spells",sub=JSON.parse(localStorage.getItem("sub")||"{}"),open=new Set(),og=new Set(),cg=new Set();
 if(!PAGES[page])page="spells";
 let mopen=new Set(JSON.parse(localStorage.getItem("mopen")||"null")||["ref"]);
@@ -179,7 +179,16 @@ function prereq(p){if(!p)return"";return p.map(o=>{const a=[];
  if(o.feat)a.push(o.feat.map(x=>x.split("|")[0]).join(" or "));
  if(o.other)a.push(o.other);
  return a.join(", ")}).filter(Boolean).join("; ")}
-function procFeats(d){return(d.feat||[]).filter(f=>!f.reprintedAs&&f.entries).map(f=>({key:f.name+"|"+f.source,name:f.name,source:f.source,cat:CAT[f.category]||"Feat",pre:prereq(f.prerequisite),text:render(f.entries)}))}
+const ABN={str:"Strength",dex:"Dexterity",con:"Constitution",int:"Intelligence",wis:"Wisdom",cha:"Charisma"};
+const orList=a=>a.length<2?a.join(""):a.slice(0,-1).join(", ")+" or "+a[a.length-1];
+function fmtAsi(ab){if(!Array.isArray(ab))return"";const out=[];
+ for(const o of ab){if(!o||o.hidden)continue;
+  const fixed=Object.keys(ABN).filter(k=>o[k]).map(k=>ABN[k]+" "+(o[k]>0?"+":"")+o[k]);
+  if(fixed.length)out.push(fixed.join(", "));
+  if(o.choose&&o.choose.from){const c=o.choose,n=c.amount||1,k=c.count||1,sg=(n>0?"+":"")+n,all=Object.keys(ABN).every(x=>c.from.includes(x)),names=c.from.map(x=>ABN[x]||x);
+   out.push(all?(k>1?sg+" to "+k+" ability scores of your choice":sg+" to one ability score of your choice"):(k>1?sg+" to "+k+" of: "+orList(names):sg+" to "+orList(names)))}}
+ return out.join("; ")}
+function procFeats(d){return(d.feat||[]).filter(f=>!f.reprintedAs&&f.entries).map(f=>({key:f.name+"|"+f.source,name:f.name,source:f.source,cat:CAT[f.category]||"Feat",pre:prereq(f.prerequisite),asi:fmtAsi(f.ability),text:render(f.entries)}))}
 const fmtSize=s=>(Array.isArray(s)?s:[s]).filter(Boolean).map(x=>SZ[x]||x).join(" or ");
 const fmtSpeed=s=>{if(s==null)return"";if(typeof s==="number")return s+" ft.";const w=s.walk&&(typeof s.walk==="number"?s.walk:s.walk.number);return Object.entries(s).map(([k,v])=>{const n=v===true?w:typeof v==="number"?v:v&&v.number;return n?k+" "+n+" ft.":""}).filter(Boolean).join(", ")};
 function modEntries(ents,mods){if(!mods)return ents;ents=ents.slice();for(const m of[].concat(mods)){const it=m.items==null?[]:[].concat(m.items);
@@ -333,7 +342,7 @@ function spellDeck(){const a=D.spells.filter(s=>sel.has(key(s))).sort((x,y)=>x.l
  const by={};a.forEach(s=>(by[s.level]=by[s.level]||[]).push(s));
  return who()+Object.keys(by).map(l=>`<h3 class="hi">${lvlName(+l)} (${by[l].length})</h3>`+rail(by[l].map(s=>spellCard(s,1)))).join("")}
 // feats
-function featCard(f,x){return gcard({t:f.name,meta:[f.cat,f.pre&&"Prerequisite: "+f.pre].filter(Boolean).join(" · "),body:f.text,foot:f.source,btn:x?rmBtn("rf",f.key):""})}
+function featCard(f,x){return gcard({dl:f.asi?[["Ability",f.asi]]:null,t:f.name,meta:[f.cat,f.pre&&"Prerequisite: "+f.pre].filter(Boolean).join(" · "),body:f.text,foot:f.source,btn:x?rmBtn("rf",f.key):""})}
 function featList(){const c=$("cat").value,t=q();
  const a=D.feats.filter(f=>(!c||f.cat===c)&&f.name.toLowerCase().includes(t)).sort((x,y)=>x.name.localeCompare(y.name));
  return who()+a.map(f=>row({k:"f:"+f.key,in:cur?`<input type="checkbox" data-kf="${esc(f.key)}" ${fsel.has(f.key)?"checked":""}>`:"",n:f.name,s:f.cat+" · "+f.source,c:()=>featCard(f)})).join("")+(a.length?"":empty(D.feats.length?"No matches.":"Loading…"))}
