@@ -22,7 +22,7 @@ button:disabled{opacity:.35}
 .bar{display:flex;gap:6px;flex-wrap:wrap}.bar input{flex:1;min-width:120px}
 #st{font-size:calc(12px*var(--fs));color:var(--mut);margin-top:6px}
 main{padding:10px 12px 60px;max-width:1100px;margin:auto}
-main.pad{padding-bottom:max(calc(100vh - 200px),calc(620px*var(--fs)))}
+main.pad{padding-bottom:calc(100vh - 230px)}
 .row{flex-wrap:wrap;display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--bd)}
 .row input{width:20px;height:20px;accent-color:var(--ac);padding:0}.row .n{flex:1}.row small{color:var(--mut)}
 .row b{min-width:22px;text-align:center}
@@ -87,7 +87,7 @@ const SRC=["PHB","DMG","EEPC","SCAG","VGM","MTF","GGR","ERLW","AI","TCE","MOT","
 const CAT={G:"General",O:"Origin",FS:"Fighting Style","FS:P":"Fighting Style (Paladin)","FS:R":"Fighting Style (Ranger)",EB:"Epic Boon",D:"Dragonmark",DG:"Dark Gift"};
 const PAGES={spells:"Spells",feats:"Feats",species:"Species",class:"Class",settings:"Settings"};
 const $=s=>document.getElementById(s);
-const DV=6,VER=14;
+const DV=6,VER=15;
 let D={spells:[],feats:[],species:[],classes:[]},page=localStorage.getItem("page")||"spells",sub=JSON.parse(localStorage.getItem("sub")||"{}"),open=new Set(),og=new Set(),cg=new Set();
 if(!PAGES[page])page="spells";
 let mopen=new Set(["ref"]);
@@ -321,7 +321,17 @@ function draw(){save();const tabs=tabsFor(),st=curSub();
  $("sort").style.display=$("cls").style.display=page==="spells"?"":"none";
  $("cat").style.display=page==="feats"?"":"none";
  $("st").style.display=lv||page==="settings"?"block":"none";
- $("m").innerHTML=view(st)}
+ $("m").innerHTML=view(st);fitPad()}
+// room under a list so the last entry can scroll up to just below the sticky header
+function fitPad(){const m=$("m");
+ if(!m.classList.contains("pad")){m.style.paddingBottom="";return}
+ const rows=m.querySelectorAll(".row");if(!rows.length){m.style.paddingBottom="";return}
+ const last=rows[rows.length-1],pad=parseFloat(getComputedStyle(m).paddingBottom)||0,
+  trail=last.nextElementSibling?0:Math.max(0,m.getBoundingClientRect().bottom-pad-last.getBoundingClientRect().bottom),
+  h=document.querySelector("header").offsetHeight;
+ m.style.paddingBottom=Math.max(0,Math.round(innerHeight-h-last.offsetHeight-trail))+"px"}
+addEventListener("resize",()=>fitPad());
+if(window.ResizeObserver)new ResizeObserver(()=>fitPad()).observe(document.querySelector("header"));
 function view(st){
  if(page==="settings")return settingsView();
  if(page==="spells")return st==="deck"?spellDeck():spellList();
