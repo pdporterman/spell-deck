@@ -22,6 +22,7 @@ button:disabled{opacity:.35}
 .bar{display:flex;gap:6px;flex-wrap:wrap}.bar input{flex:1;min-width:120px}
 #st{font-size:calc(12px*var(--fs));color:var(--mut);margin-top:6px}
 main{padding:10px 12px 60px;max-width:1100px;margin:auto}
+main.pad{padding-bottom:max(calc(100vh - 200px),calc(620px*var(--fs)))}
 .row{flex-wrap:wrap;display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--bd)}
 .row input{width:20px;height:20px;accent-color:var(--ac);padding:0}.row .n{flex:1}.row small{color:var(--mut)}
 .row b{min-width:22px;text-align:center}
@@ -44,7 +45,8 @@ main{padding:10px 12px 60px;max-width:1100px;margin:auto}
 #drawer button{text-align:left;font-size:calc(17px*var(--fs));padding:11px 12px;border:none;background:none;width:100%;border-radius:8px}
 #drawer button.on{background:var(--ac);color:#fff}
 .mrow{display:flex;align-items:center}#drawer .mrow .mh{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#drawer .mrow .edit{width:auto;flex:none;font-size:calc(14px*var(--fs));padding:6px 12px;margin-right:4px;border:1px solid var(--bd);color:var(--ac)}
-#drawer .newc{display:flex;justify-content:space-between;align-items:center;font-weight:bold}#drawer .newc span{font-size:calc(22px*var(--fs));line-height:1;color:var(--ac)}
+.chead{justify-content:space-between;padding:4px 0 4px 12px}.chl{font-weight:bold;font-size:calc(17px*var(--fs))}
+#drawer .plusb{width:calc(44px*var(--fs));height:calc(40px*var(--fs));padding:0;text-align:center;font-size:calc(24px*var(--fs));line-height:1;color:var(--ac);border:2px solid var(--ac);border-radius:10px;background:var(--card);flex:none}
 .mh{font-weight:bold}.car{display:inline-block;width:18px;color:var(--mut)}
 .kids{margin:0 0 6px 20px;border-left:2px solid var(--bd);padding-left:6px}.kids button{font-size:calc(16px*var(--fs));padding:9px 10px}
 .msep{border-top:1px solid var(--bd);margin:8px 4px}
@@ -85,10 +87,10 @@ const SRC=["PHB","DMG","EEPC","SCAG","VGM","MTF","GGR","ERLW","AI","TCE","MOT","
 const CAT={G:"General",O:"Origin",FS:"Fighting Style","FS:P":"Fighting Style (Paladin)","FS:R":"Fighting Style (Ranger)",EB:"Epic Boon",D:"Dragonmark",DG:"Dark Gift"};
 const PAGES={spells:"Spells",feats:"Feats",species:"Species",class:"Class",settings:"Settings"};
 const $=s=>document.getElementById(s);
-const DV=6,VER=13;
+const DV=6,VER=14;
 let D={spells:[],feats:[],species:[],classes:[]},page=localStorage.getItem("page")||"spells",sub=JSON.parse(localStorage.getItem("sub")||"{}"),open=new Set(),og=new Set(),cg=new Set();
 if(!PAGES[page])page="spells";
-let mopen=new Set(JSON.parse(localStorage.getItem("mopen")||"null")||["ref"]);
+let mopen=new Set(["ref"]);
 let chars=JSON.parse(localStorage.getItem("chars")||"null"),cur=localStorage.getItem("cur"),sel=new Set(),fsel=new Set();
 if(!chars){chars={};const old=JSON.parse(localStorage.getItem("deck")||"[]");if(old.length){chars.c0={name:"My Character",deck:old};cur="c0"}}
 function fix(c){c.deck=c.deck||[];c.feats=c.feats||[];c.species=c.species||"";c.classes=c.classes||{};c.subs=c.subs||{}}
@@ -97,7 +99,7 @@ if(!chars[cur])cur=null;
 const C=()=>cur?chars[cur]:null;
 function setCur(id){cur=id;const c=chars[id];sel=new Set(c.deck);fsel=new Set(c.feats);localStorage.setItem("cur",id)}
 function noCur(){cur=null;sel=new Set();fsel=new Set()}
-if(cur)setCur(cur);if(!localStorage.getItem("mopen")&&cur)mopen.add("pc:"+cur);
+if(cur)setCur(cur);mopen=new Set([cur?"pc:"+cur:"ref"]);
 function setTh(t){document.documentElement.dataset.theme=t;localStorage.setItem("theme",t);if($("nm"))$("nm").checked=t==="dark"}
 const menu=o=>{$("drawer").classList.toggle("open",!!o);$("ov").classList.toggle("open",!!o)};
 setTh(localStorage.getItem("theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"));
@@ -267,7 +269,7 @@ function drawMenu(){
  const on=(p,id)=>page===p&&(id===undefined||(id||null)===cur)?"on":"";
  const kid=(p,l,id)=>`<button class="${on(p,id)}" data-go="${p}" data-pc="${id}">${l}</button>`;
  const tg=(g,l)=>`<button class="mh" data-tg="${g}"><span class="car">${mopen.has(g)?"▾":"▸"}</span>${esc(l)}</button>`;
- let h='<h2>Spell Deck</h2><div id="msc"><button class="newc" data-newc="1">Characters<span>+</span></button>';
+ let h='<h2>Spell Deck</h2><div id="msc"><div class="mrow chead"><span class="chl">Characters</span><button class="plusb" data-newc="1" aria-label="New character">+</button></div>';
  Object.entries(chars).forEach(([id,c])=>{const g="pc:"+id;
   h+=(mopen.has(g)?`<div class="mrow">${tg(g,c.name)}<button class="edit" data-edit="${id}">Edit</button></div>`:tg(g,c.name))+(mopen.has(g)?`<div class="kids">${kid("class","Class",id)}${kid("feats","Feats",id)}${kid("species","Species",id)}${isCaster(c)?kid("spells","Spells",id):""}</div>`:"")});
  h+='<div class="msep"></div>'+tg("ref","Reference")+(mopen.has("ref")?`<div class="kids">${kid("spells","Spells","")}${kid("feats","Feats","")}${kid("species","Species","")}${kid("class","Class","")}</div>`:"")+'</div>';
@@ -275,8 +277,8 @@ function drawMenu(){
  $("drawer").innerHTML=h}
 function nav(p,id){save();
  if(id!==undefined){if(id)setCur(id);else noCur()}
- if(p!=="settings"){mopen.add(grp())}
- page=p;$("q").value="";localStorage.setItem("mopen",JSON.stringify([...mopen]));menu(0);draw();scrollTo(0,0)}
+ if(p!=="settings"){mopen=new Set([grp()])}
+ page=p;$("q").value="";menu(0);draw();scrollTo(0,0)}
 let editing=null;
 function openChar(id){editing=id||null;const c=id?chars[id]:null,fs=new Set(c?c.feats:[]);
  const cl=D.classes.map(k=>`<option value="${esc(ckey(k))}">${esc(k.name)}${k.source!=="XPHB"?" ("+esc(k.source)+")":""}</option>`).join("");
@@ -292,7 +294,7 @@ function okChar(){
   $("mod").classList.remove("open");editing=null;draw();return}
  const c={name};fix(c);const k=$("nc").value;if(k)c.classes[k]=1;c.species=species;c.feats=feats;
  save();const id="c"+Date.now();chars[id]=c;setCur(id);
- $("mod").classList.remove("open");mopen.add("pc:"+id);
+ $("mod").classList.remove("open");mopen=new Set(["pc:"+id]);
  if(!k)sub.class="class";else delete sub.class;
  nav("class")}
 const empty=t=>`<div class="empty">${t}</div>`;
@@ -314,6 +316,7 @@ function draw(){save();const tabs=tabsFor(),st=curSub();
  $("tabs").style.display=tabs.length?"flex":"none";
  $("tabs").innerHTML=tabs.map(([k,l])=>`<button class="tab ${k===st?"on":""}" data-st="${k}">${l}</button>`).join("");
  const lv=((page==="spells"||page==="feats")&&st==="list")||(page==="species"&&!cur)||(page==="class"&&st==="class");
+ $("m").className=(lv||(page==="class"&&st==="sub"))?"pad":"";
  document.querySelector(".bar").style.display=lv?"flex":"none";
  $("sort").style.display=$("cls").style.display=page==="spells"?"":"none";
  $("cat").style.display=page==="feats"?"":"none";
@@ -392,14 +395,14 @@ document.addEventListener("toggle",e=>{const t=e.target;if(t.dataset&&t.dataset.
 document.addEventListener("click",e=>{let t=e.target;const b=t.closest&&t.closest("button");if(b)t=b;const d=t.dataset;
  if(t.id==="mb")menu(1);else if(t.id==="ov")menu(0);
  else if(d.go)nav(d.go,d.pc)
- else if(d.tg){mopen.has(d.tg)?mopen.delete(d.tg):mopen.add(d.tg);localStorage.setItem("mopen",JSON.stringify([...mopen]));drawMenu()}
+ else if(d.tg){mopen=mopen.has(d.tg)?new Set():new Set([d.tg]);drawMenu()}
  else if(d.newc!==undefined)openChar()
  else if(d.edit)openChar(d.edit)
  else if(d.mc!==undefined||t.id==="mod")$("mod").classList.remove("open")
  else if(d.ok!==undefined)okChar()
  else if(d.st){sub[page]=d.st;draw();scrollTo(0,0)}
  else if(t.id==="upd")init(true);
- else if(d.del){if(confirm("Delete "+chars[d.del].name+" and everything saved for them?")){delete chars[d.del];mopen.delete("pc:"+d.del);localStorage.setItem("mopen",JSON.stringify([...mopen]));if(cur===d.del){noCur();if(page!=="settings")page="spells"}$("mod").classList.remove("open");editing=null;draw()}}
+ else if(d.del){if(confirm("Delete "+chars[d.del].name+" and everything saved for them?")){delete chars[d.del];mopen.delete("pc:"+d.del);if(cur===d.del){noCur();mopen=new Set(["ref"]);if(page!=="settings")page="spells"}$("mod").classList.remove("open");editing=null;draw()}}
  else if(d.v)keep(()=>{open.has(d.v)?open.delete(d.v):open.add(d.v);draw()});
  else if(d.rm){sel.delete(d.rm);keep(draw)}
  else if(d.rf){fsel.delete(d.rf);keep(draw)}
