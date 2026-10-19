@@ -64,6 +64,22 @@ main.pad{padding-bottom:calc(100vh - 230px)}
 
 .fsz{width:auto!important;margin:0!important}
 input[type=search],input[type=text],select{font-size:max(16px,1em)}
+.ch{display:flex;align-items:center;justify-content:space-between;gap:8px}.ch h3{flex:1;min-width:0}
+.ch[data-mn],.sech h3{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.mn{flex:none;color:var(--cc,var(--ac));font-size:calc(18px*var(--fs));line-height:1;padding:0 2px}
+.card.mini{height:auto!important}.card.mini .meta,.card.mini dl,.card.mini .body,.card.mini .ft{display:none}
+.card.mini h3{border-bottom:none;margin:0;padding:0}
+.rail .card.mini{width:calc(210px*var(--fs));align-self:flex-start}
+.sech{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:16px 0 8px}.sech h3{margin:0;flex:1;min-width:0}
+.car{display:inline-block;width:calc(18px*var(--fs))}
+.lvb{flex:none;font-size:calc(14px*var(--fs));padding:5px 12px;border-radius:999px;color:var(--ac);border:1px solid var(--ac)}
+.dtools{display:flex;gap:8px;margin:0 0 8px}.dtools button{font-size:calc(14px*var(--fs));padding:5px 12px}
+.lnk2{background:none;border:none;color:var(--ac);text-decoration:underline;padding:0 4px;font-size:inherit}
+.fbtn{flex:0 1 auto;max-width:50%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acts2{display:flex;gap:8px;margin:0 0 10px}.acts2 button{padding:6px 12px}
+.pklist{max-height:52vh;overflow:auto;border:1px solid var(--bd);border-radius:8px;padding:4px 10px}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.lvc{display:flex;align-items:center;gap:6px;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--card);margin:0!important;color:var(--fg)!important}.lvc input{width:auto;margin:0}
 </style></head><body>
 <header>
 <div class="top"><button id="mb" aria-label="Menu">☰</button><b id="ttl">Spells</b></div>
@@ -71,8 +87,8 @@ input[type=search],input[type=text],select{font-size:max(16px,1em)}
 <div class="bar">
 <input id="q" type="search" placeholder="Search…">
 <select id="sort"><option value="az">A–Z</option><option value="lvl">Level</option></select>
-<select id="cls"><option value="">All classes</option></select>
-<select id="cat"><option value="">All categories</option></select></div>
+<button id="clsb" class="fbtn">All classes ▾</button>
+<button id="catb" class="fbtn">All categories ▾</button></div>
 <div id="st">Loading…</div>
 </header>
 <div id="ov"></div>
@@ -87,13 +103,13 @@ const SRC=["PHB","DMG","EEPC","SCAG","VGM","MTF","GGR","ERLW","AI","TCE","MOT","
 const CAT={G:"General",O:"Origin",FS:"Fighting Style","FS:P":"Fighting Style (Paladin)","FS:R":"Fighting Style (Ranger)",EB:"Epic Boon",D:"Dragonmark",DG:"Dark Gift"};
 const PAGES={spells:"Spells",feats:"Feats",species:"Species",class:"Class",settings:"Settings"};
 const $=s=>document.getElementById(s);
-const DV=6,VER=15;
+const DV=6,VER=16;
 let D={spells:[],feats:[],species:[],classes:[]},page=localStorage.getItem("page")||"spells",sub=JSON.parse(localStorage.getItem("sub")||"{}"),open=new Set(),og=new Set(),cg=new Set();
 if(!PAGES[page])page="spells";
 let mopen=new Set(["ref"]);
 let chars=JSON.parse(localStorage.getItem("chars")||"null"),cur=localStorage.getItem("cur"),sel=new Set(),fsel=new Set();
 if(!chars){chars={};const old=JSON.parse(localStorage.getItem("deck")||"[]");if(old.length){chars.c0={name:"My Character",deck:old};cur="c0"}}
-function fix(c){c.deck=c.deck||[];c.feats=c.feats||[];c.species=c.species||"";c.classes=c.classes||{};c.subs=c.subs||{}}
+function fix(c){c.deck=c.deck||[];c.feats=c.feats||[];c.species=c.species||"";c.classes=c.classes||{};c.subs=c.subs||{};c.min=c.min||[];c.lvf=c.lvf||{}}
 Object.values(chars).forEach(fix);
 if(!chars[cur])cur=null;
 const C=()=>cur?chars[cur]:null;
@@ -108,7 +124,7 @@ const total=c=>Object.values(c.classes).reduce((a,b)=>a+b,0);
 const db=()=>new Promise((r,j)=>{const q=indexedDB.open("spelldeck",1);q.onupgradeneeded=()=>q.result.createObjectStore("kv");q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)});
 async function idb(mode,fn){const d=await db();return new Promise((r,j)=>{const t=d.transaction("kv",mode),q=fn(t.objectStore("kv"));t.oncomplete=()=>r(q&&q.result);t.onerror=()=>j(t.error)})}
 const get=k=>idb("readonly",s=>s.get(k)),put=(k,v)=>idb("readwrite",s=>s.put(v,k));
-const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
 function clean(t){let s=String(t).replace(/\{@h\}/g,"Hit: "),prev;
  const f=(_,tag,a)=>{const p=a.split("|");
   if(/^(i|b|bold|italic|note|u|s|strike|underline|sup|sub|small|code|color|font)$/.test(tag))return a;
@@ -256,11 +272,41 @@ async function init(force){
   try{const bad=await fetchAll();ui();$("st").textContent=counts()+(bad?" (some parts failed to update)":" — updated just now")}
   catch(e){$("st").textContent=have?counts()+" (saved copy; update failed)":"Couldn't reach 5etools: "+e.message}}}
 // ---------- UI ----------
-function ui(){
- const cs=new Set();D.spells.forEach(s=>s.classes.forEach(c=>cs.add(c)));
- let cur1=$("cls").value;$("cls").innerHTML='<option value="">All classes</option>'+[...cs].sort().map(c=>`<option>${esc(c)}</option>`).join("");$("cls").value=cur1;
- const ct=new Set(D.feats.map(f=>f.cat));cur1=$("cat").value;$("cat").innerHTML='<option value="">All categories</option>'+[...ct].sort().map(c=>`<option>${esc(c)}</option>`).join("");$("cat").value=cur1;
- draw()}
+const lget=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}};
+const lset=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+const loadSel=k=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");return Array.isArray(v)?v:null}catch(e){return null}};
+let SF=loadSel("sf"),FF=loadSel("ff");   // null = everything selected
+const revOn=()=>lget("rev","0")==="1";
+const spOpts=()=>[...new Set(D.spells.flatMap(x=>x.classes))].sort();
+const ftOpts=()=>[...new Set(D.feats.map(x=>x.cat))].sort();
+const inSel=(sel,arr)=>sel===null||arr.some(x=>sel.includes(x));
+const pickLabel=(sel,word)=>sel===null?"All "+word:!sel.length?"No "+word:sel.length<=2?sel.join(", "):sel.length+" "+word;
+function refreshFilterBtns(){$("clsb").textContent=pickLabel(SF,"classes")+" ▾";$("catb").textContent=pickLabel(FF,"categories")+" ▾"}
+const isMin=id=>!!cur&&!!chars[cur]&&chars[cur].min.includes(id);
+const secHead=(id,label,extra)=>`<div class="sech"><h3 class="hi sec" data-mn="${esc(id)}" role="button" aria-expanded="${!isMin(id)}"><span class="car">${isMin(id)?"▸":"▾"}</span>${esc(label)}</h3>${extra||""}</div>`;
+const dtools=()=>`<div class="dtools"><button data-mall="1">Collapse all</button><button data-eall="1">Expand all</button></div>`;
+function toggleMin(id){const c=C();if(!c)return;const i=c.min.indexOf(id);i<0?c.min.push(id):c.min.splice(i,1);keep(draw)}
+function collapseAll(){const c=C();if(!c)return;document.querySelectorAll("#m .ch[data-mn]").forEach(x=>{if(!c.min.includes(x.dataset.mn))c.min.push(x.dataset.mn)});keep(draw)}
+function expandAll(){const c=C();if(!c)return;const y=scrollY;
+ for(let i=0;i<4;i++){const ids=[...document.querySelectorAll("#m [data-mn]")].map(x=>x.dataset.mn).filter(x=>c.min.includes(x));if(!ids.length)break;c.min=c.min.filter(x=>!ids.includes(x));draw()}
+ scrollTo(0,y)}
+// ----- multi-select filter popup (spell classes / feat categories) -----
+const pickBoxes=k=>[...document.querySelectorAll('#mod input[data-pk="'+k+'"]')];
+function setPick(k,v){if(k==="sp"){SF=v;lset("sf",JSON.stringify(v))}else{FF=v;lset("ff",JSON.stringify(v))}
+ pickBoxes(k).forEach(x=>x.checked=v===null||v.includes(x.value));keep(draw)}
+function pickApply(k){const bx=pickBoxes(k),ch=bx.filter(x=>x.checked).map(x=>x.value);setPick(k,ch.length===bx.length?null:ch)}
+function openPick(k){const sp=k==="sp",opts=sp?spOpts():ftOpts(),sel=sp?SF:FF;
+ $("mod").innerHTML=`<div class="sheet"><h2>${sp?"Spell lists to show":"Feat categories to show"}</h2><div class="acts2"><button data-pall="${k}">Select all</button><button data-pnone="${k}">Clear</button></div><div class="pklist">${opts.map(o=>`<label class="fl"><input type="checkbox" data-pk="${k}" value="${esc(o)}" ${sel===null||sel.includes(o)?"checked":""}> ${esc(o)}</label>`).join("")||"<small>Nothing downloaded yet.</small>"}</div><div class="acts"><button class="go" data-mc="1">Done</button></div></div>`;
+ menu(0);$("mod").classList.add("open")}
+// ----- per-class level filter popup -----
+function openLevels(ck){const c=C(),k=D.classes.find(x=>ckey(x)===ck);if(!c||!k)return;const lv=c.classes[ck]||0,hid=new Set(c.lvf[ck]||[]);
+ let g="";for(let i=1;i<=lv;i++)g+=`<label class="lvc"><input type="checkbox" data-lvk="${esc(ck)}" value="${i}" ${hid.has(i)?"":"checked"}> ${i}</label>`;
+ $("mod").innerHTML=`<div class="sheet"><h2>${esc(k.name)}: levels to show</h2><p class="who">Untick the levels whose cards you don't need on screen. Levels you gain later show up automatically.</p><div class="acts2"><button data-lvsel="all" data-ck="${esc(ck)}">Select all</button><button data-lvsel="none" data-ck="${esc(ck)}">Clear</button></div><div class="lvgrid">${g}</div><div class="acts"><button class="go" data-mc="1">Done</button></div></div>`;
+ menu(0);$("mod").classList.add("open")}
+function lvApply(ck){const c=C();if(!c)return;const h=[...document.querySelectorAll("#mod input[data-lvk]")].filter(x=>!x.checked).map(x=>+x.value);if(h.length)c.lvf[ck]=h;else delete c.lvf[ck];keep(draw)}
+function lvSel(m,ck){document.querySelectorAll("#mod input[data-lvk]").forEach(x=>x.checked=m==="all");lvApply(ck)}
+// ---------- UI ----------
+function ui(){refreshFilterBtns();draw()}
 function save(){localStorage.setItem("page",page);localStorage.setItem("sub",JSON.stringify(sub));const c=C();if(c){c.deck=[...sel];c.feats=[...fsel]}localStorage.setItem("chars",JSON.stringify(chars));cur?localStorage.setItem("cur",cur):localStorage.removeItem("cur")}
 function isCaster(c){if(c.deck.length)return true;
  return D.classes.some(k=>{const ck=ckey(k);if(!(c.classes[ck]>0))return false;if(k.caster)return true;const sv=c.subs[ck],u=sv&&k.subs.find(x=>x.short+"|"+x.source===sv);return!!(u&&u.caster)})}
@@ -301,7 +347,8 @@ const empty=t=>`<div class="empty">${t}</div>`;
 const who=()=>cur?`<p class="who">Character: <b>${esc(chars[cur].name)}</b></p>`:`<p class="who">Reference: nothing is saved here</p>`;
 const q=()=>$("q").value.toLowerCase().trim();
 const rail=a=>`<div class="rail">${a.join("")}</div>`;
-function gcard(o){return`<div class="card ${o.cls||""}"${o.cc?` style="--cc:${o.cc}"`:""}>${o.wm?`<div class="wm">${o.wm}</div>`:""}<h3>${esc(o.t)}</h3><div class="meta">${esc(o.meta||"")}</div>${o.dl&&o.dl.length?`<dl>${o.dl.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`:""}<div class="body">${o.body||""}</div><div class="ft"><span>${esc(o.foot||"")}</span>${o.btn||""}</div></div>`}
+function gcard(o){const mn=!!(o.mid&&cur),mini=mn&&isMin(o.mid);
+ return`<div class="card ${o.cls||""}${mini?" mini":""}"${o.cc?` style="--cc:${o.cc}"`:""}>${o.wm?`<div class="wm">${o.wm}</div>`:""}<div class="ch"${mn?` data-mn="${esc(o.mid)}" role="button" aria-expanded="${!mini}"`:""}><h3>${esc(o.t)}</h3>${mn?`<span class="mn" aria-hidden="true">${mini?"▸":"▾"}</span>`:""}</div><div class="meta">${esc(o.meta||"")}</div>${o.dl&&o.dl.length?`<dl>${o.dl.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`:""}<div class="body">${o.body||""}</div><div class="ft"><span>${esc(o.foot||"")}</span>${o.btn||""}</div></div>`}
 function row(o){return`<div class="row">${o.in||""}<span class="n">${esc(o.n)} <small>${esc(o.s||"")}</small></span>${o.x||""}<button class="v" data-v="${esc(o.k)}">${open.has(o.k)?"Hide":"View"}</button></div>`+(open.has(o.k)?`<div style="padding:8px 0">${o.c()}</div>`:"")}
 const rmBtn=(a,k)=>`<button data-${a}="${esc(k)}">Remove</button>`;
 function tabsFor(){const c=C();
@@ -316,20 +363,24 @@ function draw(){save();const tabs=tabsFor(),st=curSub();
  $("tabs").style.display=tabs.length?"flex":"none";
  $("tabs").innerHTML=tabs.map(([k,l])=>`<button class="tab ${k===st?"on":""}" data-st="${k}">${l}</button>`).join("");
  const lv=((page==="spells"||page==="feats")&&st==="list")||(page==="species"&&!cur)||(page==="class"&&st==="class");
- $("m").className=(lv||(page==="class"&&st==="sub"))?"pad":"";
- document.querySelector(".bar").style.display=lv?"flex":"none";
- $("sort").style.display=$("cls").style.display=page==="spells"?"":"none";
- $("cat").style.display=page==="feats"?"":"none";
+ const deckF=!!cur&&(page==="spells"||page==="feats")&&st==="deck";
+ $("m").className=page==="settings"?"":"pad";
+ refreshFilterBtns();
+ document.querySelector(".bar").style.display=(lv||deckF)?"flex":"none";
+ $("q").style.display=lv?"":"none";
+ $("sort").style.display=(page==="spells"&&st==="list")?"":"none";
+ $("clsb").style.display=page==="spells"?"":"none";
+ $("catb").style.display=page==="feats"?"":"none";
  $("st").style.display=lv||page==="settings"?"block":"none";
  $("m").innerHTML=view(st);fitPad()}
 // room under a list so the last entry can scroll up to just below the sticky header
 function fitPad(){const m=$("m");
- if(!m.classList.contains("pad")){m.style.paddingBottom="";return}
- const rows=m.querySelectorAll(".row");if(!rows.length){m.style.paddingBottom="";return}
- const last=rows[rows.length-1],pad=parseFloat(getComputedStyle(m).paddingBottom)||0,
-  trail=last.nextElementSibling?0:Math.max(0,m.getBoundingClientRect().bottom-pad-last.getBoundingClientRect().bottom),
-  h=document.querySelector("header").offsetHeight;
- m.style.paddingBottom=Math.max(0,Math.round(innerHeight-h-last.offsetHeight-trail))+"px"}
+  if(!m.classList.contains("pad")){m.style.paddingBottom="";return}
+  const rows=m.querySelectorAll(".row"),h=document.querySelector("header").offsetHeight;let rh,trail=0;
+  if(rows.length){const last=rows[rows.length-1],pad=parseFloat(getComputedStyle(m).paddingBottom)||0;
+   rh=last.offsetHeight;trail=last.nextElementSibling?0:Math.max(0,m.getBoundingClientRect().bottom-pad-last.getBoundingClientRect().bottom)}
+  else rh=Math.round(50*(parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--fs"))||1));
+  m.style.paddingBottom=Math.max(0,Math.round(innerHeight-h-rh-trail))+"px"}
 addEventListener("resize",()=>fitPad());
 if(window.ResizeObserver)new ResizeObserver(()=>fitPad()).observe(document.querySelector("header"));
 function view(st){
@@ -341,47 +392,54 @@ function view(st){
 // characters / settings
 const FSZ=[["0.9","Small"],["1","Normal"],["1.15","Large"],["1.3","Larger"],["1.5","Largest"]];
 function curFs(){let z="1";try{z=localStorage.getItem("fs")||"1"}catch(e){}return z}
-function settingsView(){const z=curFs();return`<div class="row"><span class="n">Text size</span><select id="fsz" class="fsz">${FSZ.map(([v,l])=>`<option value="${v}" ${v===z?"selected":""}>${l}</option>`).join("")}</select></div><div class="row"><span class="n">Group feats by category <small>(Origin, General…)</small></span><input type="checkbox" id="fgrp" ${fgrp()?"checked":""}></div><div class="row"><span class="n">Night mode</span><input type="checkbox" id="nm" ${document.documentElement.dataset.theme==="dark"?"checked":""}></div><div class="row"><span class="n">5etools data <small>${counts()}</small></span><button id="upd">Update</button></div><p class="who">App version ${VER}</p>`}
+function settingsView(){const z=curFs();return`<div class="row"><span class="n">Text size</span><select id="fsz" class="fsz">${FSZ.map(([v,l])=>`<option value="${v}" ${v===z?"selected":""}>${l}</option>`).join("")}</select></div><div class="row"><span class="n">Newest class abilities first <small>(class deck)</small></span><input type="checkbox" id="rev" ${revOn()?"checked":""}></div><div class="row"><span class="n">Group feats by category <small>(Origin, General…)</small></span><input type="checkbox" id="fgrp" ${fgrp()?"checked":""}></div><div class="row"><span class="n">Night mode</span><input type="checkbox" id="nm" ${document.documentElement.dataset.theme==="dark"?"checked":""}></div><div class="row"><span class="n">5etools data <small>${counts()}</small></span><button id="upd">Update</button></div><p class="who">App version ${VER}</p>`}
 // spells
-function spellCard(s,x){return gcard({wm:ICON[s.school],cc:COL[s.school],t:s.name,meta:`${ordl(s.level)} ${s.school.toLowerCase()}${s.ritual?" (ritual)":""}`,dl:[["Cast",s.time],["Range",s.range],["Comp.",s.comp],["Dur.",s.dur]],body:s.text,foot:s.classes.join(", ")+" · "+s.source,btn:x?rmBtn("rm",key(s)):""})}
-function spellList(){const c=$("cls").value,t=q(),lv=$("sort").value==="lvl";
- const a=D.spells.filter(s=>(!c||s.classes.includes(c))&&s.name.toLowerCase().includes(t)).sort(lv?(x,y)=>x.level-y.level||x.name.localeCompare(y.name):(x,y)=>x.name.localeCompare(y.name));
- let last=null,h=who();
- a.forEach(s=>{if(lv&&s.level!==last){last=s.level;h+=`<h3 class="hi">${lvlName(s.level)}</h3>`}const k=key(s);
-  h+=row({k:"s:"+k,in:cur?`<input type="checkbox" data-k="${esc(k)}" ${sel.has(k)?"checked":""}>`:"",n:s.name,s:`${s.level?"L"+s.level:"Cantrip"} · ${s.school} · ${s.source}`,c:()=>spellCard(s)})});
- return h+(a.length?"":empty(D.spells.length?"No matches.":"Loading…"))}
-function spellDeck(){const a=D.spells.filter(s=>sel.has(key(s))).sort((x,y)=>x.level-y.level||x.name.localeCompare(y.name));
- if(!a.length)return who()+empty("Deck is empty. Pick spells on the Spell list tab.");
- const by={};a.forEach(s=>(by[s.level]=by[s.level]||[]).push(s));
- return who()+Object.keys(by).map(l=>`<h3 class="hi">${lvlName(+l)} (${by[l].length})</h3>`+rail(by[l].map(s=>spellCard(s,1)))).join("")}
+function spellCard(s,x){return gcard({mid:x?"s:"+key(s):null,wm:ICON[s.school],cc:COL[s.school],t:s.name,meta:`${ordl(s.level)} ${s.school.toLowerCase()}${s.ritual?" (ritual)":""}`,dl:[["Cast",s.time],["Range",s.range],["Comp.",s.comp],["Dur.",s.dur]],body:s.text,foot:s.classes.join(", ")+" · "+s.source,btn:x?rmBtn("rm",key(s)):""})}
+function spellList(){const t=q(),lv=$("sort").value==="lvl";
+  const a=D.spells.filter(s=>inSel(SF,s.classes)&&s.name.toLowerCase().includes(t)).sort(lv?(x,y)=>x.level-y.level||x.name.localeCompare(y.name):(x,y)=>x.name.localeCompare(y.name));
+  let last=null,h=who();
+  a.forEach(s=>{if(lv&&s.level!==last){last=s.level;h+=`<h3 class="hi">${lvlName(s.level)}</h3>`}const k=key(s);
+   h+=row({k:"s:"+k,in:cur?`<input type="checkbox" data-k="${esc(k)}" ${sel.has(k)?"checked":""}>`:"",n:s.name,s:`${s.level?"L"+s.level:"Cantrip"} · ${s.school} · ${s.source}`,c:()=>spellCard(s)})});
+  return h+(a.length?"":empty(D.spells.length?"No matches.":"Loading…"))}
+function spellDeck(){const all=D.spells.filter(s=>sel.has(key(s))),a=all.filter(s=>inSel(SF,s.classes)).sort((x,y)=>x.level-y.level||x.name.localeCompare(y.name));
+  if(!all.length)return who()+empty("Deck is empty. Pick spells on the Spell list tab.");
+  const note=SF!==null?`<p class="who">Showing ${esc(pickLabel(SF,"classes"))}: ${a.length} of ${all.length} spells <button class="lnk2" data-pall="sp">Show all</button></p>`:"";
+  if(!a.length)return who()+dtools()+note+empty("None of your deck spells are on the selected class lists.");
+  const by={};a.forEach(s=>(by[s.level]=by[s.level]||[]).push(s));
+  return who()+dtools()+note+Object.keys(by).map(l=>{const id="sec:lv:"+l;return secHead(id,`${lvlName(+l)} (${by[l].length})`)+(isMin(id)?"":rail(by[l].map(s=>spellCard(s,1))))}).join("")}
 // feats
-function featCard(f,x){return gcard({dl:f.asi?[["Ability",f.asi]]:null,t:f.name,meta:[f.cat,f.pre&&"Prerequisite: "+f.pre].filter(Boolean).join(" · "),body:f.text,foot:f.source,btn:x?rmBtn("rf",f.key):""})}
-function featList(){const c=$("cat").value,t=q();
- const a=D.feats.filter(f=>(!c||f.cat===c)&&f.name.toLowerCase().includes(t)).sort((x,y)=>x.name.localeCompare(y.name));
- return who()+a.map(f=>row({k:"f:"+f.key,in:cur?`<input type="checkbox" data-kf="${esc(f.key)}" ${fsel.has(f.key)?"checked":""}>`:"",n:f.name,s:f.cat+" · "+f.source,c:()=>featCard(f)})).join("")+(a.length?"":empty(D.feats.length?"No matches.":"Loading…"))}
-const fgrp=()=>{try{return localStorage.getItem("fgrp")==="1"}catch(e){return false}};
-function featDeck(){const g=fgrp(),a=D.feats.filter(f=>fsel.has(f.key)).sort(g?(x,y)=>x.cat.localeCompare(y.cat)||x.name.localeCompare(y.name):(x,y)=>x.name.localeCompare(y.name));
- if(!a.length)return who()+empty("No feats yet. Pick some on the Feat list tab.");
- if(!g)return who()+col(a.map(f=>featCard(f,1)));
- const by={};a.forEach(f=>(by[f.cat]=by[f.cat]||[]).push(f));
- return who()+Object.keys(by).map(k=>`<h3 class="hi">${esc(k)} (${by[k].length})</h3>`+col(by[k].map(f=>featCard(f,1)))).join("")}
+function featCard(f,x){return gcard({mid:x?"f:"+f.key:null,dl:f.asi?[["Ability",f.asi]]:null,t:f.name,meta:[f.cat,f.pre&&"Prerequisite: "+f.pre].filter(Boolean).join(" · "),body:f.text,foot:f.source,btn:x?rmBtn("rf",f.key):""})}
+function featList(){const t=q();
+  const a=D.feats.filter(f=>inSel(FF,[f.cat])&&f.name.toLowerCase().includes(t)).sort((x,y)=>x.name.localeCompare(y.name));
+  return who()+a.map(f=>row({k:"f:"+f.key,in:cur?`<input type="checkbox" data-kf="${esc(f.key)}" ${fsel.has(f.key)?"checked":""}>`:"",n:f.name,s:f.cat+" · "+f.source,c:()=>featCard(f)})).join("")+(a.length?"":empty(D.feats.length?"No matches.":"Loading…"))}
+const fgrp=()=>lget("fgrp","0")==="1";
+function featDeck(){const g=fgrp(),all=D.feats.filter(f=>fsel.has(f.key)),a=all.filter(f=>inSel(FF,[f.cat])).sort(g?(x,y)=>x.cat.localeCompare(y.cat)||x.name.localeCompare(y.name):(x,y)=>x.name.localeCompare(y.name));
+  if(!all.length)return who()+empty("No feats yet. Pick some on the Feat list tab.");
+  const note=FF!==null?`<p class="who">Showing ${esc(pickLabel(FF,"categories"))}: ${a.length} of ${all.length} feats <button class="lnk2" data-pall="ft">Show all</button></p>`:"";
+  if(!a.length)return who()+dtools()+note+empty("None of your deck feats are in the selected categories.");
+  if(!g)return who()+dtools()+note+col(a.map(f=>featCard(f,1)));
+  const by={};a.forEach(f=>(by[f.cat]=by[f.cat]||[]).push(f));
+  return who()+dtools()+note+Object.keys(by).map(k=>{const id="sec:ft:"+k;return secHead(id,`${k} (${by[k].length})`)+(isMin(id)?"":col(by[k].map(f=>featCard(f,1))))}).join("")}
 // species
-function spCards(p){return[gcard({t:p.name,meta:"Species",dl:[["Size",p.size],["Speed",p.speed]].filter(x=>x[1]),body:p.notes,foot:p.source})].concat(p.traits.map(t=>gcard({t:t.name,meta:p.name,body:t.text,foot:p.source})))}
+function spCards(p,dk){return[gcard({mid:dk?"p:"+p.key+":basics":null,t:p.name,meta:"Species",dl:[["Size",p.size],["Speed",p.speed]].filter(x=>x[1]),body:p.notes,foot:p.source})].concat(p.traits.map(t=>gcard({mid:dk?"p:"+p.key+":"+t.name:null,t:t.name,meta:p.name,body:t.text,foot:p.source})))}
 const col=a=>`<div class="col">${a.join("")}</div>`;
 function speciesList(){const t=q();
  const a=D.species.filter(p=>p.name.toLowerCase().includes(t));
  return who()+a.map(p=>row({k:"p:"+p.key,n:p.name,s:p.source,c:()=>col(spCards(p))})).join("")+(a.length?"":empty(D.species.length?"No matches.":"Loading…"))}
 function speciesDeck(){const c=C(),p=D.species.find(x=>x.key===c.species);
  if(!p)return who()+empty("No species chosen. Use Edit on the character in the menu to pick one.");
- return who()+`<h3 class="hi">${esc(p.name)}</h3>`+col(spCards(p))}
+ return who()+dtools()+`<h3 class="hi">${esc(p.name)}</h3>`+col(spCards(p,1))}
 // classes
-const fcard=(f,owner,sub,cn)=>gcard({wm:ICON[cn||owner]||ICON._,cc:COL[cn||owner],t:f.name,meta:"Level "+f.level+" · "+owner,body:f.text,foot:owner,cls:sub?"sub":""});
+const fcard=(f,owner,sub,cn,mid)=>gcard({mid:mid||null,wm:ICON[cn||owner]||ICON._,cc:COL[cn||owner],t:f.name,meta:"Level "+f.level+" · "+owner,body:f.text,foot:owner,cls:sub?"sub":""});
+const isSubPH=f=>/(^|\s)subclass( feature)?$/i.test(f.name);   // "You gain a subclass" / "You gain a subclass feature" placeholder cards
+const cfeats=k=>k.features.filter(f=>!isSubPH(f));
+const ordLvl=(a,r)=>a.slice().sort((x,y)=>(r?y.level-x.level:x.level-y.level)||x.name.localeCompare(y.name));
 const byLvl=a=>a.slice().sort((x,y)=>x.level-y.level||x.name.localeCompare(y.name));
 function classList(){const c=C(),t=q();let h=who();const tot=c?total(c):0;
  if(c)h+=`<p class="who">Total level: <b>${tot}</b> / 20</p>`;
  const a=D.classes.filter(k=>k.name.toLowerCase().includes(t));
  a.forEach(k=>{const ck=ckey(k),lv=c?c.classes[ck]||0:0;
-  h+=row({k:"c:"+ck,n:k.name,s:k.source+(lv?" · level "+lv:""),x:c?`<button data-lv="${esc(ck)}" data-d="-1" ${lv?"":"disabled"}>−</button><b>${lv}</b><button data-lv="${esc(ck)}" data-d="1" ${tot>=20?"disabled":""}>+</button>`:"",c:()=>rail(byLvl(k.features).map(f=>fcard(f,k.name)))})});
+  h+=row({k:"c:"+ck,n:k.name,s:k.source+(lv?" · level "+lv:""),x:c?`<button data-lv="${esc(ck)}" data-d="-1" ${lv?"":"disabled"}>−</button><b>${lv}</b><button data-lv="${esc(ck)}" data-d="1" ${tot>=20?"disabled":""}>+</button>`:"",c:()=>rail(byLvl(cfeats(k)).map(f=>fcard(f,k.name)))})});
  return h+(a.length?"":empty(D.classes.length?"No matches.":"Loading…"))}
 function classSubs(){const c=C();let h=who();
  const list=c?D.classes.filter(k=>(c.classes[ckey(k)]||0)>0):D.classes;
@@ -393,16 +451,25 @@ function classSubs(){const c=C();let h=who();
    return row({k:"u:"+ck+"|"+sv,in:c?`<input type="radio" name="r${i}" data-sc="${esc(ck)}" data-sv="${esc(sv)}" ${c.subs[ck]===sv?"checked":""}>`:"",n:s.name,s:s.source,c:()=>s.features.length?rail(byLvl(s.features).map(f=>fcard(f,s.name,1,k.name))):empty("No features found.")})}).join("")+(k.subs.length?"":empty("No subclasses."))+"</details>"});
  return h}
 function classDeck(){const c=C();let h=who()+`<p class="who">Total level: <b>${total(c)}</b> / 20</p>`;
- const list=D.classes.filter(k=>(c.classes[ckey(k)]||0)>0);
- if(!list.length)return h+empty("No classes yet. Add levels on the Class tab.");
- list.forEach(k=>{const ck=ckey(k),lv=c.classes[ck],sv=c.subs[ck],s=sv&&k.subs.find(x=>x.short+"|"+x.source===sv);
-  const cards=byLvl(k.features.filter(f=>f.level<=lv).map(f=>({...f,own:0})).concat(s?s.features.filter(f=>f.level<=lv).map(f=>({...f,own:1})):[])).map(f=>f.own?fcard(f,s.name,1,k.name):fcard(f,k.name));
-  h+=`<h3 class="hi">${esc(k.name)} ${lv}${s?" · "+esc(s.name):""}</h3>`+(cards.length?(list.length===1?col(cards):rail(cards)):empty("No features at this level."))});
- return h}
+  const list=D.classes.filter(k=>(c.classes[ckey(k)]||0)>0);
+  if(!list.length)return h+empty("No classes yet. Add levels on the Class tab.");
+  h+=dtools();const rev=revOn();
+  list.forEach(k=>{const ck=ckey(k),lv=c.classes[ck],sv=c.subs[ck],s=sv&&k.subs.find(x=>x.short+"|"+x.source===sv);
+   const hid=new Set((c.lvf[ck]||[]).filter(x=>x<=lv)),sid="sec:cl:"+ck;
+   const base=cfeats(k).filter(f=>f.level<=lv&&!hid.has(f.level)).map(f=>({...f,own:0})),
+    subf=s?s.features.filter(f=>f.level<=lv&&!hid.has(f.level)).map(f=>({...f,own:1})):[];
+   const cards=ordLvl(base.concat(subf),rev).map(f=>f.own?fcard(f,s.name,1,k.name,"sf:"+ck+"|"+s.short+"|"+s.source+":"+f.level+":"+f.name):fcard(f,k.name,0,k.name,"cf:"+ck+":"+f.level+":"+f.name));
+   const btn=`<button class="lvb" data-lvf="${esc(ck)}">${hid.size?`Levels · ${lv-hid.size} of ${lv}`:"Levels"}</button>`;
+   h+=secHead(sid,`${k.name} ${lv}${s?" · "+s.name:""}`,btn);
+   if(isMin(sid))return;
+   const pick=k.features.find(f=>isSubPH(f)&&!/feature$/i.test(f.name));
+   if(!s&&k.subs.length&&pick&&lv>=pick.level)h+=`<p class="who">Level ${pick.level}: choose a ${esc(k.name)} subclass on the Subclass tab.</p>`;
+   h+=cards.length?(list.length===1?col(cards):rail(cards)):empty(hid.size?"No cards for the levels you selected. Use Levels to show more.":"No features at this level.")});
+  return h}
 // ---------- events ----------
 const keep=f=>{const y=scrollY;f();scrollTo(0,y)};
 document.addEventListener("toggle",e=>{const t=e.target;if(t.dataset&&t.dataset.g){if(t.open){og.add(t.dataset.g);cg.delete(t.dataset.g)}else{og.delete(t.dataset.g);cg.add(t.dataset.g)}}},true);
-document.addEventListener("click",e=>{let t=e.target;const b=t.closest&&t.closest("button");if(b)t=b;const d=t.dataset;
+document.addEventListener("click",e=>{let t=e.target;const hm=t.closest&&t.closest("[data-mn]");if(hm&&hm.dataset.mn){toggleMin(hm.dataset.mn);return}const b=t.closest&&t.closest("button");if(b)t=b;const d=t.dataset;
  if(t.id==="mb")menu(1);else if(t.id==="ov")menu(0);
  else if(d.go)nav(d.go,d.pc)
  else if(d.tg){mopen=mopen.has(d.tg)?new Set():new Set([d.tg]);drawMenu()}
@@ -413,20 +480,31 @@ document.addEventListener("click",e=>{let t=e.target;const b=t.closest&&t.closes
  else if(d.st){sub[page]=d.st;draw();scrollTo(0,0)}
  else if(t.id==="upd")init(true);
  else if(d.del){if(confirm("Delete "+chars[d.del].name+" and everything saved for them?")){delete chars[d.del];mopen.delete("pc:"+d.del);if(cur===d.del){noCur();mopen=new Set(["ref"]);if(page!=="settings")page="spells"}$("mod").classList.remove("open");editing=null;draw()}}
+ else if(t.id==="clsb")openPick("sp")
+ else if(t.id==="catb")openPick("ft")
+ else if(d.lvf!==undefined)openLevels(d.lvf)
+ else if(d.pall)setPick(d.pall,null)
+ else if(d.pnone)setPick(d.pnone,[])
+ else if(d.lvsel)lvSel(d.lvsel,d.ck)
+ else if(d.mall!==undefined)collapseAll()
+ else if(d.eall!==undefined)expandAll()
  else if(d.v)keep(()=>{open.has(d.v)?open.delete(d.v):open.add(d.v);draw()});
  else if(d.rm){sel.delete(d.rm);keep(draw)}
  else if(d.rf){fsel.delete(d.rf);keep(draw)}
 
  else if(d.lv){const c=C();if(c&&!(+d.d>0&&total(c)>=20)){c.classes[d.lv]=Math.max(0,(c.classes[d.lv]||0)+ +d.d);keep(draw)}}});
 document.addEventListener("change",e=>{const t=e.target,d=t.dataset;
- if(d.k){t.checked?sel.add(d.k):sel.delete(d.k);save()}
+ if(d.pk)pickApply(d.pk)
+ else if(d.lvk!==undefined)lvApply(d.lvk)
+ else if(d.k){t.checked?sel.add(d.k):sel.delete(d.k);save()}
  else if(d.kf){t.checked?fsel.add(d.kf):fsel.delete(d.kf);save()}
 
  else if(d.sc){C().subs[d.sc]=d.sv;save()}
  else if(t.id==="fsz"){document.documentElement.style.setProperty("--fs",t.value);try{localStorage.setItem("fs",t.value)}catch(e){}}
- else if(t.id==="fgrp"){try{localStorage.setItem("fgrp",t.checked?"1":"0")}catch(e){}}
+ else if(t.id==="fgrp"){lset("fgrp",t.checked?"1":"0")}
+ else if(t.id==="rev"){lset("rev",t.checked?"1":"0")}
  else if(t.id==="nm")setTh(t.checked?"dark":"light");
- else if(t.id==="sort"||t.id==="cls"||t.id==="cat")draw()});
+ else if(t.id==="sort")draw()});
 $("q").addEventListener("input",draw);
 document.addEventListener("input",e=>{const t=e.target;if(t.id==="nf"){const v=t.value.toLowerCase();document.querySelectorAll("#mod .fl").forEach(l=>l.style.display=l.dataset.n.includes(v)?"":"none")}});
 document.addEventListener("change",e=>{if(e.target.closest&&e.target.closest("#mod .fls")){const n=document.querySelectorAll("#mod .fls input:checked").length;$("nfc").textContent=n?"("+n+" chosen)":""}});
