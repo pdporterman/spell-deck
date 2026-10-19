@@ -80,6 +80,13 @@ input[type=search],input[type=text],select{font-size:max(16px,1em)}
 .pklist{max-height:52vh;overflow:auto;border:1px solid var(--bd);border-radius:8px;padding:4px 10px}
 .lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 .lvc{display:flex;align-items:center;gap:6px;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--card);margin:0!important;color:var(--fg)!important}.lvc input{width:auto;margin:0}
+.ctr{border:1px solid var(--bd);border-radius:12px;background:var(--card);padding:12px;margin:0 0 12px}
+.ctrh{display:flex;justify-content:space-between;align-items:center;gap:8px}.ctrh b{font-size:calc(17px*var(--fs))}
+.ctrv{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0}.ctrv button{width:60px;height:48px;font-size:calc(24px*var(--fs));padding:0}
+.cn{font-size:calc(34px*var(--fs));font-weight:700;color:var(--ac);text-align:center}.cn small{font-size:.5em;color:var(--mut)}
+.ctra{display:flex;gap:8px}.ctra input{flex:1;min-width:0;font-size:max(16px,1em);padding:8px}
+.big{font-size:calc(20px*var(--fs));font-weight:700;color:var(--ac)}.bon{min-width:44px;text-align:right}
+.row input.abi{width:76px;height:auto;padding:6px;text-align:center;font-size:max(16px,1em)}
 </style></head><body>
 <header>
 <div class="top"><button id="mb" aria-label="Menu">☰</button><b id="ttl">Spells</b></div>
@@ -101,15 +108,16 @@ const SCH={A:"Abjuration",C:"Conjuration",D:"Divination",E:"Enchantment",V:"Evoc
 const SZ={T:"Tiny",S:"Small",M:"Medium",L:"Large",H:"Huge",G:"Gargantuan",V:"Varies"};
 const SRC=["PHB","DMG","EEPC","SCAG","VGM","MTF","GGR","ERLW","AI","TCE","MOT","EGW","SCC","VRGR","WBtW","AAG","FTD","MPMM","DSotDQ","XPHB","EFA","LFL"];
 const CAT={G:"General",O:"Origin",FS:"Fighting Style","FS:P":"Fighting Style (Paladin)","FS:R":"Fighting Style (Ranger)",EB:"Epic Boon",D:"Dragonmark",DG:"Dark Gift"};
-const PAGES={spells:"Spells",feats:"Feats",species:"Species",class:"Class",settings:"Settings"};
+const PAGES={spells:"Spells",feats:"Feats",species:"Species",class:"Class",stats:"Stats",counters:"Counters",settings:"Settings"};
 const $=s=>document.getElementById(s);
-const DV=6,VER=16;
+const DV=6,VER=17;
 let D={spells:[],feats:[],species:[],classes:[]},page=localStorage.getItem("page")||"spells",sub=JSON.parse(localStorage.getItem("sub")||"{}"),open=new Set(),og=new Set(),cg=new Set();
 if(!PAGES[page])page="spells";
 let mopen=new Set(["ref"]);
 let chars=JSON.parse(localStorage.getItem("chars")||"null"),cur=localStorage.getItem("cur"),sel=new Set(),fsel=new Set();
 if(!chars){chars={};const old=JSON.parse(localStorage.getItem("deck")||"[]");if(old.length){chars.c0={name:"My Character",deck:old};cur="c0"}}
-function fix(c){c.deck=c.deck||[];c.feats=c.feats||[];c.species=c.species||"";c.classes=c.classes||{};c.subs=c.subs||{};c.min=c.min||[];c.lvf=c.lvf||{}}
+const STATS=[["str","Strength",["Athletics"]],["dex","Dexterity",["Acrobatics","Sleight of Hand","Stealth"]],["con","Constitution",[]],["int","Intelligence",["Arcana","History","Investigation","Nature","Religion"]],["wis","Wisdom",["Animal Handling","Insight","Medicine","Perception","Survival"]],["cha","Charisma",["Deception","Intimidation","Performance","Persuasion"]]];
+function fix(c){c.useSt=!!c.useSt;c.useCt=!!c.useCt;c.pf=c.pf||{};c.cts=c.cts||[];c.sc=c.sc||{};STATS.forEach(a=>{if(!(c.sc[a[0]]>=1))c.sc[a[0]]=10});c.deck=c.deck||[];c.feats=c.feats||[];c.species=c.species||"";c.classes=c.classes||{};c.subs=c.subs||{};c.min=c.min||[];c.lvf=c.lvf||{}}
 Object.values(chars).forEach(fix);
 if(!chars[cur])cur=null;
 const C=()=>cur?chars[cur]:null;
@@ -317,7 +325,7 @@ function drawMenu(){
  const tg=(g,l)=>`<button class="mh" data-tg="${g}"><span class="car">${mopen.has(g)?"▾":"▸"}</span>${esc(l)}</button>`;
  let h='<h2>Spell Deck</h2><div id="msc"><div class="mrow chead"><span class="chl">Characters</span><button class="plusb" data-newc="1" aria-label="New character">+</button></div>';
  Object.entries(chars).forEach(([id,c])=>{const g="pc:"+id;
-  h+=(mopen.has(g)?`<div class="mrow">${tg(g,c.name)}<button class="edit" data-edit="${id}">Edit</button></div>`:tg(g,c.name))+(mopen.has(g)?`<div class="kids">${kid("class","Class",id)}${kid("feats","Feats",id)}${kid("species","Species",id)}${isCaster(c)?kid("spells","Spells",id):""}</div>`:"")});
+  h+=(mopen.has(g)?`<div class="mrow">${tg(g,c.name)}<button class="edit" data-edit="${id}">Edit</button></div>`:tg(g,c.name))+(mopen.has(g)?`<div class="kids">${kid("class","Class",id)}${kid("feats","Feats",id)}${kid("species","Species",id)}${c.useSt?kid("stats","Stats",id):""}${c.useCt?kid("counters","Counters",id):""}${isCaster(c)?kid("spells","Spells",id):""}</div>`:"")});
  h+='<div class="msep"></div>'+tg("ref","Reference")+(mopen.has("ref")?`<div class="kids">${kid("spells","Spells","")}${kid("feats","Feats","")}${kid("species","Species","")}${kid("class","Class","")}</div>`:"")+'</div>';
  h+=`<button id="gear" class="${page==="settings"?"on":""}" data-go="settings" aria-label="Settings">⚙</button>`;
  $("drawer").innerHTML=h}
@@ -330,15 +338,15 @@ function openChar(id){editing=id||null;const c=id?chars[id]:null,fs=new Set(c?c.
  const cl=D.classes.map(k=>`<option value="${esc(ckey(k))}">${esc(k.name)}${k.source!=="XPHB"?" ("+esc(k.source)+")":""}</option>`).join("");
  const sp=D.species.map(p=>`<option value="${esc(p.key)}">${esc(p.name)}</option>`).join("");
  const ft=D.feats.map(f=>`<label class="fl" data-n="${esc(f.name.toLowerCase())}"><input type="checkbox" value="${esc(f.key)}" ${fs.has(f.key)?"checked":""}> ${esc(f.name)} <small>${esc(f.cat)}</small></label>`).join("");
- $("mod").innerHTML=`<div class="sheet"><h2>${c?"Edit character":"New character"}</h2><label>Name<input id="nn" type="text" placeholder="Character name" autocomplete="off"></label>${c?"":`<label>Starting class (optional)<select id="nc"><option value="">None</option>${cl}</select></label>`}<label>Species${c?"":" (optional)"}<select id="ns"><option value="">None</option>${sp}</select></label><details><summary>Feats${c?"":" (optional)"} <small id="nfc"></small></summary><input id="nf" type="search" placeholder="Filter feats…"><div class="fls">${ft||"<small>Feats haven't downloaded yet.</small>"}</div></details><div class="acts">${c?`<button class="danger" data-del="${id}">Delete</button>`:""}<button data-mc="1">Cancel</button><button class="go" data-ok="1">${c?"Save":"Create"}</button></div></div>`;
- if(c){$("nn").value=c.name;$("ns").value=c.species||""}
+ $("mod").innerHTML=`<div class="sheet"><h2>${c?"Edit character":"New character"}</h2><label>Name<input id="nn" type="text" placeholder="Character name" autocomplete="off"></label>${c?"":`<label>Starting class (optional)<select id="nc"><option value="">None</option>${cl}</select></label>`}<label>Species${c?"":" (optional)"}<select id="ns"><option value="">None</option>${sp}</select></label><details><summary>Feats${c?"":" (optional)"} <small id="nfc"></small></summary><input id="nf" type="search" placeholder="Filter feats…"><div class="fls">${ft||"<small>Feats haven't downloaded yet.</small>"}</div></details><div class="mods"><small>Optional menus</small><label class="fl"><input type="checkbox" id="ust"> Stats</label><label class="fl"><input type="checkbox" id="uct"> Counters</label></div><div class="acts">${c?`<button class="danger" data-del="${id}">Delete</button>`:""}<button data-mc="1">Cancel</button><button class="go" data-ok="1">${c?"Save":"Create"}</button></div></div>`;
+ if(c){$("nn").value=c.name;$("ns").value=c.species||"";$("ust").checked=c.useSt;$("uct").checked=c.useCt}
  const n=fs.size;$("nfc").textContent=n?"("+n+" chosen)":"";
  menu(0);$("mod").classList.add("open");if(!c)setTimeout(()=>{const x=$("nn");x&&x.focus()},50)}
 function okChar(){
  const name=$("nn").value.trim()||"New Character",feats=[...document.querySelectorAll("#mod .fls input:checked")].map(x=>x.value),species=$("ns").value;
- if(editing&&chars[editing]){const c=chars[editing];save();c.name=name;c.species=species;c.feats=feats;if(cur===editing)fsel=new Set(feats);
+ if(editing&&chars[editing]){const c=chars[editing];save();c.name=name;c.species=species;c.feats=feats;c.useSt=$("ust").checked;c.useCt=$("uct").checked;if(cur===editing)fsel=new Set(feats);
   $("mod").classList.remove("open");editing=null;draw();return}
- const c={name};fix(c);const k=$("nc").value;if(k)c.classes[k]=1;c.species=species;c.feats=feats;
+ const c={name};fix(c);c.useSt=$("ust").checked;c.useCt=$("uct").checked;const k=$("nc").value;if(k)c.classes[k]=1;c.species=species;c.feats=feats;
  save();const id="c"+Date.now();chars[id]=c;setCur(id);
  $("mod").classList.remove("open");mopen=new Set(["pc:"+id]);
  if(!k)sub.class="class";else delete sub.class;
@@ -353,18 +361,19 @@ function row(o){return`<div class="row">${o.in||""}<span class="n">${esc(o.n)} <
 const rmBtn=(a,k)=>`<button data-${a}="${esc(k)}">Remove</button>`;
 function tabsFor(){const c=C();
  if(page==="class")return c?[["class","Class"],["sub","Subclass"],["deck","Deck"]]:[["class","Class"],["sub","Subclass"]];
+ if(page==="stats"&&c)return[["scores","Scores"],["prof","Proficiency"],["sheet","Sheet"]];
  if(!c||!["spells","feats"].includes(page))return[];
  const n=page==="spells"?sel.size:fsel.size;
  return[["list",{spells:"Spell list",feats:"Feat list"}[page]],["deck","Deck ("+n+")"]]}
-function curSub(){const t=tabsFor().map(x=>x[0]);let s=sub[page];if(!t.includes(s))s=t.includes("deck")?"deck":t[0]||"list";return s}
-function draw(){save();const tabs=tabsFor(),st=curSub();
+function curSub(){const t=tabsFor().map(x=>x[0]);let s=sub[page];if(!t.includes(s))s=t.includes("deck")?"deck":t.includes("sheet")?"sheet":t[0]||"list";return s}
+function draw(){if((page==="stats"||page==="counters")&&!(C()&&C()[page==="stats"?"useSt":"useCt"]))page=cur?"class":"spells";save();const tabs=tabsFor(),st=curSub();
  drawMenu();
  $("ttl").textContent=page==="settings"?PAGES[page]:(cur?chars[cur].name:"Reference")+" · "+PAGES[page];
  $("tabs").style.display=tabs.length?"flex":"none";
  $("tabs").innerHTML=tabs.map(([k,l])=>`<button class="tab ${k===st?"on":""}" data-st="${k}">${l}</button>`).join("");
  const lv=((page==="spells"||page==="feats")&&st==="list")||(page==="species"&&!cur)||(page==="class"&&st==="class");
  const deckF=!!cur&&(page==="spells"||page==="feats")&&st==="deck";
- $("m").className=page==="settings"?"":"pad";
+ $("m").className=(page==="settings"||page==="stats"||page==="counters")?"":"pad";
  refreshFilterBtns();
  document.querySelector(".bar").style.display=(lv||deckF)?"flex":"none";
  $("q").style.display=lv?"":"none";
@@ -385,6 +394,8 @@ addEventListener("resize",()=>fitPad());
 if(window.ResizeObserver)new ResizeObserver(()=>fitPad()).observe(document.querySelector("header"));
 function view(st){
  if(page==="settings")return settingsView();
+ if(page==="stats")return statsView(st);
+ if(page==="counters")return counterView();
  if(page==="spells")return st==="deck"?spellDeck():spellList();
  if(page==="feats")return st==="deck"?featDeck():featList();
  if(page==="species")return cur?speciesDeck():speciesList();
@@ -392,6 +403,30 @@ function view(st){
 // characters / settings
 const FSZ=[["0.9","Small"],["1","Normal"],["1.15","Large"],["1.3","Larger"],["1.5","Largest"]];
 function curFs(){let z="1";try{z=localStorage.getItem("fs")||"1"}catch(e){}return z}
+const sg=n=>n<0?"-"+(-n):"+"+n,abMod=n=>Math.floor((n-10)/2),pbOf=c=>2+Math.floor((Math.max(1,total(c))-1)/4);
+function statsView(st){const c=C();
+ if(st==="scores")return who()+'<p class="who">Enter your raw ability scores.</p>'+STATS.map(([k,n])=>`<div class="row"><span class="n">${n}</span><input class="abi" type="number" inputmode="numeric" min="1" max="30" data-ab="${k}" value="${c.sc[k]}"></div>`).join("");
+ if(st==="prof")return who()+'<p class="who">Mark saving throws and skills you are proficient in. Skills can also have expertise.</p>'+STATS.map(([k,n,sk])=>`<h3 class="hi">${n}</h3><div class="row"><span class="n">Saving throw</span><input type="checkbox" data-pfk="save:${k}" ${c.pf["save:"+k]?"checked":""}></div>`+sk.map(x=>`<div class="row"><span class="n">${x}</span><select data-pfs="${esc(x)}"><option value="0">None</option><option value="1" ${c.pf[x]===1?"selected":""}>Proficient</option><option value="2" ${c.pf[x]===2?"selected":""}>Expertise</option></select></div>`).join("")).join("");
+ const pb=pbOf(c),lv=total(c);
+ return who()+`<p class="who">Proficiency bonus <b>${sg(pb)}</b> · ${lv?"character level "+lv:"no class levels yet, using level 1"}</p>`+STATS.map(([k,n,sk])=>{const m=abMod(c.sc[k]),id="sec:st:"+k,sv=c.pf["save:"+k]?1:0;
+  return secHead(id,n+" "+c.sc[k],`<span class="big">${sg(m)}</span>`)+(isMin(id)?"":`<div class="row"><span class="n">Saving throw <small>${sv?"proficient":""}</small></span><b class="bon">${sg(m+pb*sv)}</b></div>`+sk.map(x=>{const l=c.pf[x]||0;return`<div class="row"><span class="n">${x} <small>${l===2?"expertise":l===1?"proficient":""}</small></span><b class="bon">${sg(m+pb*l)}</b></div>`}).join(""))}).join("")}
+function setAb(k,el){const c=C();if(!c)return;let v=Math.round(parseFloat(el.value));if(!(v>=1))v=10;c.sc[k]=Math.min(30,v);el.value=c.sc[k];save()}
+function setPf(k,v){const c=C();if(!c)return;v?c.pf[k]=v:delete c.pf[k];save()}
+// ----- counters -----
+const newTid=()=>"t"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+function counterView(){const c=C();
+ const add='<div class="acts2"><button data-cnew="1">+ Add counter</button></div>';
+ if(!c.cts.length)return who()+add+empty("No counters yet. Add one for HP, gold, spell slots…");
+ return who()+add+c.cts.map(t=>`<div class="ctr"><div class="ctrh"><b>${esc(t.name)}</b><button data-ctre="${t.id}">Edit</button></div><div class="ctrv"><button data-ctr="${t.id}" data-amt="-1" aria-label="Minus one">−</button><span class="cn">${t.v}${t.max!=null?`<small> / ${t.max}</small>`:""}</span><button data-ctr="${t.id}" data-amt="1" aria-label="Plus one">+</button></div><div class="ctra"><input type="number" inputmode="numeric" data-ci="${t.id}" placeholder="Amount"><button data-csub="${t.id}">Subtract</button><button data-cadd="${t.id}">Add</button></div></div>`).join("")}
+function ctrSet(id,v){const c=C(),t=c&&c.cts.find(x=>x.id===id);if(!t)return;v=Math.max(0,Math.round(v));if(t.max!=null)v=Math.min(t.max,v);t.v=v;keep(draw)}
+function ctrAmt(id,sign){const c=C(),t=c&&c.cts.find(x=>x.id===id),i=document.querySelector('input[data-ci="'+id+'"]'),n=parseInt(i&&i.value,10);if(!t||!n)return;ctrSet(id,t.v+sign*Math.abs(n))}
+let ectr=null;
+function openCtr(id){const c=C();if(!c)return;ectr=id||null;const t=id?c.cts.find(x=>x.id===id):null;
+ $("mod").innerHTML=`<div class="sheet"><h2>${t?"Edit counter":"New counter"}</h2><label>Name<input id="ctn" type="text" placeholder="HP, Gold, Rage…" autocomplete="off" value="${t?esc(t.name):""}"></label><label>Current value<input id="ctv" type="number" inputmode="numeric" min="0" placeholder="${t?"":"Starts at max, or 0"}" value="${t?t.v:""}" style="width:100%;margin:4px 0 12px"></label><label>Max (optional, leave empty for no max)<input id="ctm" type="number" inputmode="numeric" min="1" value="${t&&t.max!=null?t.max:""}" style="width:100%;margin:4px 0 12px"></label><div class="acts">${t?`<button class="danger" data-cdel="${t.id}">Delete</button>`:""}<button data-mc="1">Cancel</button><button class="go" data-cok="1">${t?"Save":"Add"}</button></div></div>`;
+ menu(0);$("mod").classList.add("open");if(!t)setTimeout(()=>{const x=$("ctn");x&&x.focus()},50)}
+function okCtr(){const c=C();if(!c)return;const name=$("ctn").value.trim()||"Counter",mv=parseInt($("ctm").value,10),max=mv>=1?mv:null,vv=parseInt($("ctv").value,10);
+ let t=ectr&&c.cts.find(x=>x.id===ectr);if(!t){t={id:newTid(),name,v:0,max:null};c.cts.push(t);t.v=vv>=0?vv:(max!=null?max:0)}else if(vv>=0)t.v=vv;
+ t.name=name;t.max=max;if(max!=null&&t.v>max)t.v=max;ectr=null;$("mod").classList.remove("open");keep(draw)}
 function settingsView(){const z=curFs();return`<div class="row"><span class="n">Text size</span><select id="fsz" class="fsz">${FSZ.map(([v,l])=>`<option value="${v}" ${v===z?"selected":""}>${l}</option>`).join("")}</select></div><div class="row"><span class="n">Newest class abilities first <small>(class deck)</small></span><input type="checkbox" id="rev" ${revOn()?"checked":""}></div><div class="row"><span class="n">Group feats by category <small>(Origin, General…)</small></span><input type="checkbox" id="fgrp" ${fgrp()?"checked":""}></div><div class="row"><span class="n">Night mode</span><input type="checkbox" id="nm" ${document.documentElement.dataset.theme==="dark"?"checked":""}></div><div class="row"><span class="n">5etools data <small>${counts()}</small></span><button id="upd">Update</button></div><p class="who">App version ${VER}</p>`}
 // spells
 function spellCard(s,x){return gcard({mid:x?"s:"+key(s):null,wm:ICON[s.school],cc:COL[s.school],t:s.name,meta:`${ordl(s.level)} ${s.school.toLowerCase()}${s.ritual?" (ritual)":""}`,dl:[["Cast",s.time],["Range",s.range],["Comp.",s.comp],["Dur.",s.dur]],body:s.text,foot:s.classes.join(", ")+" · "+s.source,btn:x?rmBtn("rm",key(s)):""})}
@@ -488,13 +523,24 @@ document.addEventListener("click",e=>{let t=e.target;const hm=t.closest&&t.close
  else if(d.lvsel)lvSel(d.lvsel,d.ck)
  else if(d.mall!==undefined)collapseAll()
  else if(d.eall!==undefined)expandAll()
+
+ else if(d.cnew!==undefined)openCtr()
+ else if(d.ctre)openCtr(d.ctre)
+ else if(d.cok!==undefined)okCtr()
+ else if(d.cdel){const c=C();if(c&&confirm("Delete this counter?")){c.cts=c.cts.filter(x=>x.id!==d.cdel);ectr=null;$("mod").classList.remove("open");keep(draw)}}
+ else if(d.ctr)ctrSet(d.ctr,((C().cts.find(x=>x.id===d.ctr)||{}).v||0)+ +d.amt)
+ else if(d.cadd)ctrAmt(d.cadd,1)
+ else if(d.csub)ctrAmt(d.csub,-1)
  else if(d.v)keep(()=>{open.has(d.v)?open.delete(d.v):open.add(d.v);draw()});
  else if(d.rm){sel.delete(d.rm);keep(draw)}
  else if(d.rf){fsel.delete(d.rf);keep(draw)}
 
  else if(d.lv){const c=C();if(c&&!(+d.d>0&&total(c)>=20)){c.classes[d.lv]=Math.max(0,(c.classes[d.lv]||0)+ +d.d);keep(draw)}}});
 document.addEventListener("change",e=>{const t=e.target,d=t.dataset;
- if(d.pk)pickApply(d.pk)
+ if(d.ab)setAb(d.ab,t)
+ else if(d.pfs)setPf(d.pfs,+t.value)
+ else if(d.pfk)setPf(d.pfk,t.checked?1:0)
+ else if(d.pk)pickApply(d.pk)
  else if(d.lvk!==undefined)lvApply(d.lvk)
  else if(d.k){t.checked?sel.add(d.k):sel.delete(d.k);save()}
  else if(d.kf){t.checked?fsel.add(d.kf):fsel.delete(d.kf);save()}
