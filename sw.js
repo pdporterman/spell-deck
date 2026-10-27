@@ -1,10 +1,10 @@
 // Offline support. Bump VERSION whenever any file changes so installed copies refresh.
-const VERSION = 'spelldeck-v20';
+const VERSION = 'spelldeck-v22';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/style.css',
   'icons/icon-180.png?v=2', 'icons/icon-192.png?v=2', 'icons/icon-512.png?v=2',
   'js/main.js', 'js/store.js', 'js/nav.js', 'js/ui.js', 'js/theme.js', 'js/data.js', 'js/process.js', 'js/fmt.js', 'js/icons.js',
-  'js/cards.js', 'js/rules.js', 'js/res.js', 'js/filters.js', 'js/lists.js', 'js/pickers.js', 'js/charform.js',
+  'js/cards.js', 'js/rules.js', 'js/res.js', 'js/slots.js', 'js/weapons.js', 'js/filters.js', 'js/lists.js', 'js/pickers.js', 'js/charform.js',
   'js/pages/sheet.js', 'js/pages/counters.js', 'js/pages/traits.js', 'js/pages/class.js', 'js/pages/spells.js', 'js/pages/resources.js', 'js/pages/ref.js', 'js/pages/settings.js',
 ];
 self.addEventListener('install', e => {
