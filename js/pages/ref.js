@@ -8,7 +8,7 @@ const makers = { 'ref-spells': spellList, 'ref-feats': featList, 'ref-species': 
 export function mount(root, view) {
   const make = makers[view];
   const fit = () => fitPad(root);
-  const list = view === 'ref-spells' || view === 'ref-feats' ? make(null, fit) : make(fit);
+  const list = view === 'ref-spells' || view === 'ref-feats' || view === 'ref-species' ? make(null, fit) : make(fit);
   root.append(list.root);
   const on = () => fit();
   addEventListener('resize', on);

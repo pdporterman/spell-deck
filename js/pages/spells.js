@@ -6,11 +6,14 @@ import { spellCard, rail, section, collapseTools } from '../cards.js';
 import { openSpellPicker } from '../pickers.js';
 import { inSel, getSel, pickLabel, filterButton, spellOpts } from '../filters.js';
 import { lvlName } from '../fmt.js';
+import { slotsSection } from '../slots.js';
 
 export const title = 'Spells';
 
 export function mount(root, { ch, redraw }) {
   const all = D.spells.filter(s => ch.deck.includes(key(s)));
+  const slots = slotsSection(ch, redraw);
+  if (slots) root.append(slots);
   if (!all.length) { root.append(el('div', { class: 'empty' }, el('p', { text: 'Your spell deck is empty.' }), el('p', { class: 'small', text: 'Use Edit (top right) to add spells.' }))); return; }
   const f = getSel('sf');
   const a = all.filter(s => inSel(f, s.classes)).sort((x, y) => x.level - y.level || x.name.localeCompare(y.name));

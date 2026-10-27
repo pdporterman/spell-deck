@@ -4,7 +4,7 @@ import * as D from '../data.js';
 import { el, toast, confirmBox } from '../ui.js';
 import { applySettings } from '../theme.js';
 
-export const VER = 20;
+export const VER = 22;
 export const title = 'Settings';
 const PX_MIN = 12, PX_MAX = 28;
 

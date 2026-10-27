@@ -4,7 +4,9 @@ import { STATS } from '../store.js';
 import { el, clear, modal, amountBox, sgn } from '../ui.js';
 import { gcard, collapseTools } from '../cards.js';
 import { D } from '../data.js';
-import { pbOf, hasJoat, bardLevel, BTO, btoName, calc, castAbil, ABK } from '../rules.js';
+import { pbOf, hasJoat, bardLevel, BTO, btoName, calc, castAbil, ABK, weaponStats } from '../rules.js';
+import { section } from '../cards.js';
+import { openWeaponForm, propText } from '../weapons.js';
 const ABN = Object.fromEntries(STATS.map(a => [a[0], a[1]]));
 
 export const title = 'Character Sheet';
@@ -32,10 +34,9 @@ function hpBlock(ch, redraw) {
 }
 
 function combatPanel(ch, c) {
-  const cb = ch.cb, hit = cb.hit || 0, row = (l, v, small) => `<div class="srow"><span>${l}${small ? ` <small>${small}</small>` : ''}</span><b>${v}</b></div>`;
+  const cb = ch.cb, row = (l, v, small) => `<div class="srow"><span>${l}${small ? ` <small>${small}</small>` : ''}</span><b>${v}</b></div>`;
   const p = D.species.find(x => x.key === ch.species), ab = castAbil(ch);
   let h = row('Armor Class', cb.ac || '—') + row('Initiative', sgn(c.mod.dex + (cb.init || 0))) + row('Speed', p && p.speed ? p.speed : '—') + row('Passive Perception', 10 + c.skill('wis', 'Perception').v);
-  h += row('Weapon attack', sgn(c.pb + c.mod.str + hit) + ' melee · ' + sgn(c.pb + c.mod.dex + hit) + ' ranged', 'proficient');
   if (ab) h += row('Spell save DC', 8 + c.pb + c.mod[ab] + (cb.dc || 0), ABN[ab]) + row('Spell attack', sgn(c.pb + c.mod[ab] + (cb.spatk || 0)), ABN[ab]);
   return el('div', { class: 'ctr' }, el('div', { class: 'ctr-head' }, el('b', { text: 'Combat' })), el('div', { html: h }));
 }
@@ -44,15 +45,45 @@ export function mount(root, { ch, redraw }) {
   const c = calc(ch), lv = S.total(ch), jb = hasJoat(ch) ? Math.floor(c.pb / 2) : 0;
   root.append(el('p', { class: 'who' }, 'Proficiency bonus ', el('b', { text: sgn(c.pb) }), ' · ' + (lv ? 'character level ' + lv : 'no class levels yet, using level 1'), jb ? ' · Jack of All Trades ' + sgn(jb) : ''));
   root.append(el('div', { class: 'ctr-grid' }, hpBlock(ch, redraw), combatPanel(ch, c)));
-  const cards = STATS.map(([k, n, sk]) => {
-    const line = (label, tags, v) => `<div class="srow"><span>${label}${tags.length ? ` <small>${tags.join(', ')}</small>` : ''}</span><b>${sgn(v)}</b></div>`;
-    const sv = c.save(k);
-    let body = line('Saving throw', sv.tags, sv.v);
-    for (const x of sk) { const r = c.skill(k, x); body += line(x, r.tags, r.v); }
-    const add = c.score[k] - ch.sc[k];
-    return gcard({ mid: 'st:' + k, ch, cls: 'st', t: n + ' ' + sgn(c.mod[k]), meta: 'Score ' + c.score[k] + (add ? ' (' + ch.sc[k] + ' base +' + add + ' from feats/species)' : ''), body });
-  });
-  root.append(collapseTools(root, ch), el('div', { class: 'stat-grid' }, cards));
+  root.append(attacks(ch, c, redraw));
+  const line = (label, tags, v) => `<div class="srow"><span>${label}${tags.length ? ` <small>${tags.join(', ')}</small>` : ''}</span><b>${sgn(v)}</b></div>`;
+  const set = S.get().settings, mode = set.skillSort === 'stat' ? 'stat' : 'az';
+  const sortBtn = el('button', { class: 'btn small', text: mode === 'az' ? 'Skills: A–Z' : 'Skills: by ability', 'aria-label': 'Change how skills are sorted', on: { click: () => { set.skillSort = mode === 'az' ? 'stat' : 'az'; S.save(); redraw(); } } });
+  const tb = collapseTools(root, ch); tb.append(sortBtn); root.append(tb);
+  if (mode === 'stat') {
+    root.append(el('div', { class: 'stat-grid' }, STATS.map(([k, n, sk]) => {
+      const sv = c.save(k); let body = line('Saving throw', sv.tags, sv.v);
+      for (const x of sk) { const r = c.skill(k, x); body += line(x, r.tags, r.v); }
+      const add = c.score[k] - ch.sc[k];
+      return gcard({ mid: 'st:' + k, ch, cls: 'st', t: n + ' ' + sgn(c.mod[k]), meta: 'Score ' + c.score[k] + (add ? ' (' + ch.sc[k] + ' base +' + add + ' from feats/species)' : ''), body });
+    })));
+    return;
+  }
+  const tiles = el('div', { class: 'abil-grid' }, STATS.map(([k, n]) => {
+    const sv = c.save(k), add = c.score[k] - ch.sc[k];
+    return el('div', { class: 'abil' }, el('small', { text: n }), el('b', { text: sgn(c.mod[k]) }), el('span', { text: 'Score ' + c.score[k] + (add ? ' (+' + add + ')' : '') }),
+      el('span', { class: 'sv' + (ch.pf['save:' + k] ? ' on' : ''), text: 'Save ' + sgn(sv.v) + (ch.pf['save:' + k] ? ' ●' : '') }));
+  }));
+  root.append(section(ch, 'sec:abil', 'Abilities & saves', tiles));
+  const skills = STATS.flatMap(([k, n, sk]) => sk.map(x => ({ x, k, ab: n.slice(0, 3), r: c.skill(k, x) }))).sort((p, q) => p.x.localeCompare(q.x));
+  root.append(section(ch, 'sec:skills', 'Skills', el('div', { class: 'skill-list', html: skills.map(s => line(`${s.x} <small>${s.ab}</small>`, s.r.tags, s.r.v)).join('') })));
+}
+
+// ---- attacks: weapons the character carries ----
+function attacks(ch, c, redraw) {
+  const list = ch.weapons || [];
+  const body = el('div', { class: 'wlist' });
+  if (!list.length) body.append(el('p', { class: 'muted small', text: 'No weapons yet. Use Add weapon.' }));
+  for (const w of list) {
+    const st = weaponStats(ch, w, c), meta = [propText(w), w.range && 'range ' + w.range, (w.mastery || []).length && 'Mastery: ' + w.mastery.join(', ')].filter(Boolean).join(' · ');
+    body.append(el('div', { class: 'weapon' },
+      el('div', { class: 'ctr-head' }, el('b', { text: w.name + (w.mag ? ' +' + w.mag : '') }), el('button', { class: 'btn small', text: 'Edit', on: { click: () => openWeaponForm(ch, w, redraw) } })),
+      el('div', { class: 'srow' }, el('span', { text: 'Attack ' }, el('small', { text: st.k.toUpperCase() + (w.prof === 0 ? '' : ' + prof') })), el('b', { text: sgn(st.atk) })),
+      el('div', { class: 'srow' }, el('span', { text: 'Damage' }), el('b', { text: st.dmg + ' ' + (w.dt || '') })),
+      st.dmg2 ? el('div', { class: 'srow' }, el('span', { text: 'Two-handed' }), el('b', { text: st.dmg2 })) : null,
+      meta ? el('p', { class: 'muted small', style: 'margin:.2rem 0 0', text: meta }) : null));
+  }
+  return section(ch, 'sec:attacks', 'Attacks', body, el('button', { class: 'lvb', text: 'Add weapon', on: { click: () => openWeaponForm(ch, null, redraw) } }));
 }
 
 // ---- edit popup: HP, scores, proficiencies, bonuses ----
@@ -79,9 +110,7 @@ export function edit({ ch, redraw }) {
     for (const [k, n, sk] of STATS) {
       body.append(el('div', { class: 'pickrow' }, el('label', { class: 'check n' }, el('input', { type: 'checkbox', checked: !!ch.pf['save:' + k], on: { change: e => { e.target.checked ? ch.pf['save:' + k] = 1 : delete ch.pf['save:' + k]; S.save(); } } }), n + ' saving throw')));
       for (const x of sk) {
-        const sel = el('select', { 'aria-label': x, on: { change: e => { +e.target.value ? ch.pf[x] = +e.target.value : delete ch.pf[x]; S.save(); } } },
-          el('option', { value: 0, text: 'None' }), el('option', { value: 1, text: 'Proficient', selected: ch.pf[x] === 1 }), el('option', { value: 2, text: 'Expertise', selected: ch.pf[x] === 2 }));
-        body.append(el('div', { class: 'pickrow' }, el('span', { class: 'n', text: x }), sel));
+        body.append(el('label', { class: 'check n' }, el('input', { type: 'checkbox', checked: !!ch.pf[x], on: { change: e => { e.target.checked ? ch.pf[x] = 1 : delete ch.pf[x]; S.save(); } } }), x));
       }
     }
     body.append(el('h3', { class: 'hi', text: 'Bonuses' }));
