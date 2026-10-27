@@ -31,7 +31,7 @@ export function fmtAsi(ab){if(!Array.isArray(ab))return"";const out=[];
   if(o.choose&&o.choose.from){const c=o.choose,n=c.amount||1,k=c.count||1,sg=(n>0?"+":"")+n,all=Object.keys(ABN).every(x=>c.from.includes(x)),names=c.from.map(x=>ABN[x]||x);
    out.push(all?(k>1?sg+" to "+k+" ability scores of your choice":sg+" to one ability score of your choice"):(k>1?sg+" to "+k+" of: "+orList(names):sg+" to "+orList(names)))}}
  return out.join("; ")}
-export function procFeats(d){return(d.feat||[]).filter(f=>!f.reprintedAs&&f.entries).map(f=>({key:f.name+"|"+f.source,name:f.name,source:f.source,cat:CAT[f.category]||"Feat",pre:prereq(f.prerequisite),asi:fmtAsi(f.ability),ab:(f.ability||[]).filter(o=>o&&!o.hidden),text:render(f.entries)}))}
+export function procFeats(d){return(d.feat||[]).filter(f=>!f.reprintedAs&&f.entries).map(f=>({key:f.name+"|"+f.source,name:f.name,source:f.source,cat:CAT[f.category]||"Feat",pre:prereq(f.prerequisite),asi:fmtAsi(f.ability),ab:(f.ability||[]).filter(Boolean),rep:!!f.repeatable,text:render(f.entries)}))}
 export const fmtSize=s=>(Array.isArray(s)?s:[s]).filter(Boolean).map(x=>SZ[x]||x).join(" or ");
 export const fmtSpeed=s=>{if(s==null)return"";if(typeof s==="number")return s+" ft.";const w=s.walk&&(typeof s.walk==="number"?s.walk:s.walk.number);return Object.entries(s).map(([k,v])=>{const n=v===true?w:typeof v==="number"?v:v&&v.number;return n?k+" "+n+" ft.":""}).filter(Boolean).join(", ")};
 export function modEntries(ents,mods){if(!mods)return ents;ents=ents.slice();for(const m of[].concat(mods)){const it=m.items==null?[]:[].concat(m.items);
@@ -91,3 +91,14 @@ export function procClasses(files){const out=[];
     return{name:s.name,short:s.shortName,source:s.source,prog:s.casterProgression||(bsub&&bsub.casterProgression)||"",abil:s.spellcastingAbility||(bsub&&bsub.spellcastingAbility)||"",caster:!!(s.casterProgression||(bsub&&bsub.casterProgression)),features:sf}}).filter((s,i,a)=>s.source==="XPHB"||!a.some(o=>o.name===s.name&&o.source==="XPHB")).sort((a,b)=>a.name.localeCompare(b.name));
    out.push({name:c.name,source:c.source,prog:c.casterProgression||"",abil:c.spellcastingAbility||"",tbl:tblOf(c),caster:!!(c.casterProgression||c.spellcastingAbility),features:feats,subs})}}
  return out.sort((a,b)=>a.name.localeCompare(b.name))}
+
+// mundane weapons from items-base.json (newest printing of each name wins)
+export const WPROP={F:'Finesse',V:'Versatile',T:'Thrown',L:'Light',H:'Heavy','2H':'Two-handed',A:'Ammunition',R:'Reach',LD:'Loading',S:'Special',AF:'Ammunition'};
+export const DMGT={S:'slashing',P:'piercing',B:'bludgeoning'};
+export function procWeapons(d){const rank={XPHB:0,XDMG:1,PHB:2,DMG:3},by=new Map();
+ for(const i of d.baseitem||[]){if(!i.weapon||i.reprintedAs||!(i.source in rank)||!i.dmg1||/^(Net)$/.test(i.name))continue;
+  const o=by.get(i.name);if(o&&rank[o.source]<=rank[i.source])continue;
+  const code=x=>String(x).split("|")[0];
+  by.set(i.name,{key:i.name+"|"+i.source,name:i.name,source:i.source,cat:i.weaponCategory||"",rng:String(i.type||"").startsWith("R"),dmg:i.dmg1,dmg2:i.dmg2||"",dt:DMGT[i.dmgType]||i.dmgType||"",
+   props:(i.property||[]).map(code),range:i.range||"",mastery:(i.mastery||[]).map(code)})}
+ return[...by.values()].sort((a,b)=>a.name.localeCompare(b.name))}

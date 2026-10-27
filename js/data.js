@@ -1,8 +1,8 @@
 // 5etools data: downloaded once, kept on this device (IndexedDB), refreshed in the background.
-import { BASE, slim, procFeats, procSpecies, procClasses } from './process.js';
+import { BASE, slim, procFeats, procSpecies, procClasses, procWeapons } from './process.js';
 
-export const D = { spells: [], feats: [], species: [], classes: [] };
-export const DV = 7;                       // bump to force a re-download on every device
+export const D = { spells: [], feats: [], species: [], classes: [], weapons: [] };
+export const DV = 10;                       // bump to force a re-download on every device
 const DB = 'spelldeck', STORE = 'kv';
 const db = () => new Promise((res, rej) => { const q = indexedDB.open(DB, 1); q.onupgradeneeded = () => q.result.createObjectStore(STORE); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
 async function idb(mode, fn) { const d = await db(); return new Promise((res, rej) => { const t = d.transaction(STORE, mode), q = fn(t.objectStore(STORE)); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); }); }
@@ -27,11 +27,12 @@ async function fetchAll(progress) {
     },
     feats: async () => procFeats(await j('feats.json')),
     species: async () => procSpecies(await j('races.json')),
+    weapons: async () => procWeapons(await j('items-base.json')),
     classes: async () => { const idx = await j('class/index.json'); return procClasses(await Promise.all(Object.values(idx).map(f => j('class/' + f)))); },
   };
   let bad = 0;
   await Promise.all(Object.entries(jobs).map(async ([k, f]) => { try { D[k] = await f(); await putK(k, D[k]); } catch (e) { bad++; console.error(k, e); } }));
-  if (bad === 4) throw Error('download failed');
+  if (bad === 5) throw Error('download failed');
   if (!bad) { await putK('ver', DV); await putK('when', Date.now()); meta.when = Date.now(); }
   return bad;
 }

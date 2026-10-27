@@ -2,36 +2,46 @@
 import * as S from './store.js';
 import * as nav from './nav.js';
 import { D } from './data.js';
-import { el, clear, modal, confirmBox, clickPrimary } from './ui.js';
+import { el, clear, modal, confirmBox, clickPrimary, sortable } from './ui.js';
+import { speciesList } from './lists.js';
 import { classEditor } from './pickers.js';
 
 export function openCharForm(id) {
   const orig = id ? S.get().chars[id] : null;
   const c = orig ? JSON.parse(JSON.stringify(orig)) : S.newChar('');
   const all = Object.keys(S.CHAR_PAGES);
-  let order = c.pages.concat(all.filter(p => !c.pages.includes(p)));
+  let order = c.pages.concat(S.DEFAULT_PAGES.filter(p => all.includes(p) && !c.pages.includes(p)));
   const on = new Set(c.pages);
 
   const name = el('input', { type: 'text', value: c.name, maxLength: 40, placeholder: 'Character name', autocomplete: 'off', 'aria-label': 'Name' });
   name.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); clickPrimary(); } });
-  const species = el('select', { 'aria-label': 'Species' }, el('option', { value: '', text: 'None' }), D.species.map(p => el('option', { value: p.key, text: p.name, selected: p.key === c.species })));
-  species.addEventListener('change', () => { c.species = species.value; });
+  // species: opens a searchable list (like the spell picker) where you can read each one before ticking it
+  const spLabel = el('span', { class: 'n' });
+  const showSp = () => { const p = D.species.find(x => x.key === c.species); spLabel.textContent = p ? p.name + ' (' + p.source + ')' : 'None'; };
+  showSp();
+  const pickSpecies = () => {
+    let list;
+    const sel = { get: () => c.species, set: k => { c.species = k; showSp(); list.draw(); } };
+    list = speciesList(sel);
+    modal({ title: 'Choose species', wide: true, noFocus: true, body: list.root, actions: [{ label: 'Done', kind: 'primary' }] });
+  };
+  const species = el('div', { class: 'pickrow' }, spLabel, el('button', { class: 'btn small', text: 'Choose…', type: 'button', on: { click: pickSpecies } }));
 
   const pagesBox = el('div');
   const drawPages = () => {
     clear(pagesBox);
-    order.forEach((p, i) => pagesBox.append(el('div', { class: 'pickrow' },
-      el('label', { class: 'check n' }, el('input', { type: 'checkbox', checked: on.has(p), on: { change: e => { e.target.checked ? on.add(p) : on.delete(p); } } }), S.CHAR_PAGES[p]),
-      el('button', { class: 'btn small icon', text: '▲', 'aria-label': 'Move up', disabled: i === 0, on: { click: () => { [order[i - 1], order[i]] = [order[i], order[i - 1]]; drawPages(); } } }),
-      el('button', { class: 'btn small icon', text: '▼', 'aria-label': 'Move down', disabled: i === order.length - 1, on: { click: () => { [order[i + 1], order[i]] = [order[i], order[i + 1]]; drawPages(); } } }))));
+    order.forEach(p => pagesBox.append(el('div', { class: 'pickrow', 'data-id': p },
+      el('span', { class: 'grip', 'aria-label': 'Drag to reorder ' + S.CHAR_PAGES[p], role: 'img', text: '☰' }),
+      el('label', { class: 'check n' }, el('input', { type: 'checkbox', checked: on.has(p), on: { change: e => { e.target.checked ? on.add(p) : on.delete(p); } } }), S.CHAR_PAGES[p]))));
   };
+  sortable(pagesBox, ids => { order = ids; });
   drawPages();
 
   const body = el('div', { class: 'form' },
     el('label', null, 'Name', name),
     el('div', null, el('b', { text: 'Class' }), classEditor(c)),
-    el('label', null, 'Species (optional)', species),
-    el('div', null, el('b', { text: 'Pages' }), el('p', { class: 'muted small', text: 'Tick the pages this character uses and put them in the order you like. You can change this later with Edit.' }), pagesBox));
+    el('div', null, el('b', { text: 'Species (optional)' }), species),
+    el('div', null, el('b', { text: 'Pages' }), el('p', { class: 'muted small', text: 'Tick the pages this character uses and drag ☰ to put them in the order you like. You can change this later with Edit.' }), pagesBox));
 
   const save = close => {
     const pages = order.filter(p => on.has(p));

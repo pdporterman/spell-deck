@@ -64,10 +64,11 @@ export function featList(sel, onDraw) {
   });
   return list;
 }
-export function speciesList(onDraw) {
+export function speciesList(sel, onDraw) {
   return makeList({
     onDraw, empty: () => (D.species.length ? 'No matches.' : 'Loading…'),
-    items: q => D.species.filter(p => p.name.toLowerCase().includes(q)).map(p => ({ k: 'p:' + p.key, n: p.name, s: p.source, card: () => col(speciesCards(p, null)) })),
+    items: q => D.species.filter(p => p.name.toLowerCase().includes(q)).map(p => ({ k: 'p:' + p.key, n: p.name, s: p.source,
+      check: sel && { on: sel.get() === p.key, set: v => sel.set(v ? p.key : '') }, card: () => col(speciesCards(p, null)) })),
   });
 }
 // classes: one list of classes; subclass rows live under each class

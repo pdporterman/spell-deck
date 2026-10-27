@@ -101,3 +101,33 @@ export function fitPad(page) {
 }
 
 export const sgn = n => (n < 0 ? '-' + (-n) : '+' + n);
+
+// Drag rows up and down by their .grip handle (mouse or touch). onDone(newOrderOfDataIds)
+export function sortable(box, onDone) {
+  box.addEventListener('pointerdown', e => {
+    const grip = e.target.closest('.grip');
+    if (!grip) return;
+    const row = grip.closest('[data-id]');
+    if (!row) return;
+    e.preventDefault();
+    grip.setPointerCapture(e.pointerId);
+    const startY = e.clientY, startTop = row.offsetTop;
+    row.classList.add('dragging');
+    const move = ev => {
+      row.style.transform = 'none';
+      for (;;) {
+        const prev = row.previousElementSibling, next = row.nextElementSibling, y = ev.clientY;
+        if (prev) { const r = prev.getBoundingClientRect(); if (y < r.top + r.height / 2) { box.insertBefore(row, prev); continue; } }
+        if (next) { const r = next.getBoundingClientRect(); if (y > r.top + r.height / 2) { box.insertBefore(next, row); continue; } }
+        break;
+      }
+      row.style.transform = 'translateY(' + (ev.clientY - startY - (row.offsetTop - startTop)) + 'px)';
+    };
+    const up = () => {
+      grip.removeEventListener('pointermove', move); grip.removeEventListener('pointerup', up); grip.removeEventListener('pointercancel', up);
+      row.classList.remove('dragging'); row.style.transform = '';
+      onDone([...box.querySelectorAll('[data-id]')].map(r => r.dataset.id));
+    };
+    grip.addEventListener('pointermove', move); grip.addEventListener('pointerup', up); grip.addEventListener('pointercancel', up);
+  });
+}

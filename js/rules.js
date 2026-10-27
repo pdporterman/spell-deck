@@ -28,9 +28,13 @@ export const plain = h => String(h || '').replace(/<[^>]+>/g, ' ').replace(/&amp
 
 // ---- ability score bonuses from feats and species ----
 // ab: raw 5etools ability list -> fixed bonuses plus "choose" slots
-export function abSlots(ab) {
+// several "choose" entries with no fixed bonus are alternatives (e.g. Ability Score Improvement: +2 to one score OR +1 to two)
+export const isAlt = ab => (ab || []).length > 1 && ab.every(o => o.choose && !ABK.some(k => o[k]));
+export const altName = o => { const c = o.choose || {}; const w = c.weighted ? c.weighted.weights : null; const n = w ? w.length : (c.count || 1), a = w ? w[0] : (c.amount || 1); return n > 1 ? '+' + a + ' to ' + n + ' different scores' : '+' + a + ' to one score'; };
+export function abSlots(ab, mode) {
   const fixed = {}, slots = [];
-  for (const o of ab || []) {
+  const list = isAlt(ab) ? [ab[mode] || ab[0]] : ab || [];
+  for (const o of list) {
     for (const k of ABK) if (o[k]) fixed[k] = (fixed[k] || 0) + o[k];
     const c = o.choose;
     if (!c) continue;
@@ -41,7 +45,12 @@ export function abSlots(ab) {
 }
 export function abSources(ch) {
   const out = [];
-  for (const key of ch.feats) { const f = D.feats.find(x => x.key === key); if (f && f.ab && f.ab.length) out.push({ id: 'f:' + key, ab: f.ab, name: f.name }); }
+  for (const key of ch.feats) {
+    const f = D.feats.find(x => x.key === key);
+    if (!f || !f.ab || !f.ab.length) continue;
+    const n = f.rep ? Math.max(1, (ch.fc && ch.fc[key]) || 1) : 1;
+    for (let i = 0; i < n; i++) { const id = 'f:' + key + (i ? '#' + (i + 1) : ''); out.push({ id, ab: f.ab, name: f.name, mode: +ch.picks[id + '~m'] || 0 }); }
+  }
   const p = D.species.find(x => x.key === ch.species);
   if (p && p.ab && p.ab.length) out.push({ id: 'p:' + p.key, ab: p.ab, name: p.name });
   return out;
@@ -49,7 +58,7 @@ export function abSources(ch) {
 export function abBonus(ch) {
   const b = {};
   for (const s of abSources(ch)) {
-    const { fixed, slots } = abSlots(s.ab), picks = ch.picks[s.id] || [];
+    const { fixed, slots } = abSlots(s.ab, s.mode), picks = ch.picks[s.id] || [];
     for (const k in fixed) b[k] = (b[k] || 0) + fixed[k];
     slots.forEach((sl, i) => { const k = picks[i]; if (k && sl.from.includes(k)) b[k] = (b[k] || 0) + sl.amt; });
   }
@@ -113,4 +122,15 @@ export function calc(ch) {
   const save = k => { const l = ch.pf['save:' + k] ? 1 : 0, [e, tags] = extra(ch, k, false, l); return { v: mod[k] + pb * l + e, tags: [l ? 'proficient' : '', ...tags].filter(Boolean) }; };
   const skill = (k, x) => { const l = profLevel(ch, x, ex), [e, tags] = extra(ch, k, true, l); return { v: mod[k] + pb * l + e, l, tags: [l === 2 ? 'expertise' : l === 1 ? 'proficient' : '', ...tags].filter(Boolean) }; };
   return { pb, bon, ex, score, mod, save, skill };
+}
+
+// ---- weapons: attack and damage for one entry of ch.weapons ----
+export function weaponStats(ch, w, c) {
+  const fin = (w.props || []).includes('F');
+  const k = w.abil || (fin ? (c.mod.dex > c.mod.str ? 'dex' : 'str') : w.rng ? 'dex' : 'str');
+  const m = c.mod[k], mag = +w.mag || 0, hit = (ch.cb && ch.cb.hit) || 0;
+  const atk = m + (w.prof === 0 ? 0 : c.pb) + mag + hit, flat = m + mag;
+  const f = n => (n ? (n > 0 ? '+' : '−') + Math.abs(n) : '');
+  const dmg = (w.dmg || '') + f(flat) + (w.dice ? ' + ' + w.dice : '');
+  return { k, atk, dmg, dmg2: w.dmg2 && (w.props || []).includes('V') ? w.dmg2 + f(flat) + (w.dice ? ' + ' + w.dice : '') : '' };
 }

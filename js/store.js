@@ -4,7 +4,8 @@ const KEY = 'spelldeck.v2';
 export const CHAR_PAGES = {
   sheet: 'Character Sheet', counters: 'Counters', traits: 'Features & Traits', class: 'Class Abilities', spells: 'Spells', resources: 'Resources',
 };
-export const DEFAULT_PAGES = ['sheet', 'class', 'traits', 'spells', 'resources', 'counters'];
+export const DEFAULT_PAGES = ['spells', 'class', 'traits', 'sheet', 'resources', 'counters'];
+export const DEFAULT_ON = ['spells', 'class', 'traits'];   // pages a new character starts with
 export const REF_PAGES = { 'ref-spells': 'Spells', 'ref-feats': 'Feats', 'ref-species': 'Species', 'ref-class': 'Class' };
 export const STATS = [
   ['str', 'Strength', ['Athletics']], ['dex', 'Dexterity', ['Acrobatics', 'Sleight of Hand', 'Stealth']], ['con', 'Constitution', []],
@@ -24,20 +25,20 @@ export const uid = () => Math.random().toString(36).slice(2, 8) + Date.now().toS
 // Fill in anything a saved character is missing so every page can rely on it.
 export function fixChar(c) {
   c.name = c.name || 'New Character';
-  c.pages = Array.isArray(c.pages) && c.pages.length ? c.pages.filter(p => CHAR_PAGES[p]) : DEFAULT_PAGES.slice();
-  if (!c.pages.length) c.pages = DEFAULT_PAGES.slice();
+  c.pages = Array.isArray(c.pages) && c.pages.length ? c.pages.filter(p => CHAR_PAGES[p]) : DEFAULT_ON.slice();
+  if (!c.pages.length) c.pages = DEFAULT_ON.slice();
   c.deck = c.deck || []; c.feats = c.feats || []; c.species = c.species || '';
   c.classes = c.classes || {}; c.subs = c.subs || {}; c.min = c.min || []; c.lvf = c.lvf || {};
   c.pf = c.pf || {}; c.bon = c.bon || {}; c.bon.joat = c.bon.joat ? 1 : 0; c.bon.ra = c.bon.ra ? 1 : 0; c.bon.list = c.bon.list || [];
   c.cts = c.cts || []; c.sc = c.sc || {};
-  c.picks = c.picks || {}; c.cb = c.cb || {}; c.res = c.res || {}; c.res.used = c.res.used || {};
+  c.fc = c.fc || {}; c.weapons = c.weapons || []; c.picks = c.picks || {}; c.cb = c.cb || {}; c.res = c.res || {}; c.res.used = c.res.used || {};
   if (!c.hasRes) { c.hasRes = 1; if (!c.pages.includes('resources')) { const i = c.pages.indexOf('counters'); c.pages.splice(i < 0 ? c.pages.length : i, 0, 'resources'); } }
   for (const a of STATS) if (!(c.sc[a[0]] >= 1)) c.sc[a[0]] = 10;
   c.hp = c.hp || {}; c.hp.max = c.hp.max > 0 ? c.hp.max : 0; c.hp.cur = c.hp.cur >= 0 ? c.hp.cur : c.hp.max; c.hp.temp = c.hp.temp > 0 ? c.hp.temp : 0;
   if (!c.pages.includes(c.page)) c.page = c.pages[0];
   return c;
 }
-export const newChar = name => fixChar({ id: uid(), name });
+export const newChar = name => fixChar({ id: uid(), name, hasRes: 1 });
 
 function migrate() {
   const g = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
