@@ -2,7 +2,7 @@
 import { BASE, slim, procFeats, procSpecies, procClasses, procWeapons, procOpts } from './process.js';
 
 export const D = { spells: [], feats: [], species: [], classes: [], weapons: [], opts: [] };
-export const DV = 11;                       // bump to force a re-download on every device
+export const DV = 12;                       // bump to force a re-download on every device
 const DB = 'spelldeck', STORE = 'kv';
 const db = () => new Promise((res, rej) => { const q = indexedDB.open(DB, 1); q.onupgradeneeded = () => q.result.createObjectStore(STORE); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
 async function idb(mode, fn) { const d = await db(); return new Promise((res, rej) => { const t = d.transaction(STORE, mode), q = fn(t.objectStore(STORE)); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); }); }
