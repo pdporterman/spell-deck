@@ -32,6 +32,8 @@ function classResources(ch, mods) {
     if (n === 'Cleric' && lv >= 10) add('Divine Intervention', 1, 'long');
     if (n === 'Warlock' && modern && lv >= 2) add('Magical Cunning', 1, 'long');
     if (n === 'Artificer' && lv >= 7) add('Flash of Genius', Math.max(1, mods.int), 'long');
+    const sub = ch.subs[ck] && k.subs.find(x => x.short + '|' + x.source === ch.subs[ck]);
+    if (sub && sub.name === 'Battle Master') add('Superiority Dice', lv >= 15 ? 6 : lv >= 7 ? 5 : 4, 'short', 'Die size: d8 (d10 at level 10, d12 at level 18). Spend one on a maneuver.');
     if (n === 'Rogue' && lv >= 20) add('Stroke of Luck', 1, 'short');
   }
   return out;
@@ -40,7 +42,7 @@ function classResources(ch, mods) {
 // "use it a number of times equal to your Proficiency Bonus" / "once per long rest" in a trait's text
 function textUses(text, pb) {
   const t = plain(text);
-  const rest = /Short Rest/i.test(t) ? 'short' : 'long';
+  const rest = /Short Rest|Short or Long|Short\/Long|Short or a Long/i.test(t) ? 'short' : 'long';   // "Short or Long Rest" regains on either, so it resets on a short rest
   if (/number of times equal to your Proficiency Bonus/i.test(t)) return { max: pb, rest };
   if (/(can'?t|cannot)[^.]*again[^.]*(Long|Short)[^.]*Rest/i.test(t) || /once (per|before)[^.]*(Long|Short)[^.]*Rest/i.test(t)
     || /regain (the ability|all expended uses)[^.]*(Long|Short)[^.]*Rest/i.test(t)) return { max: 1, rest };

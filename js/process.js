@@ -78,6 +78,18 @@ function tblOf(c){const cols=[];let sp=null;
  for(const g of c.classTableGroups||[]){const rows=g.rows||g.rowsSpellProgression;if(!rows)continue;if(g.rowsSpellProgression)sp=g.rowsSpellProgression;
   (g.colLabels||[]).forEach((l,i)=>cols.push({l:clean(String(l)),v:rows.map(r=>tcell(r[i]))}))}
  return{cols,sp}}
+// optional features: metamagic, eldritch invocations, maneuvers, fighting styles, infusions, pact boons...
+export function procOpts(d){const rank={XPHB:0,TCE:1,PHB:2},by=new Map();
+ const pre=p=>(p||[]).map(o=>{const a=[];if(o.level)a.push("Level "+(o.level.level||o.level));if(o.pact)a.push("Pact of the "+o.pact);
+  if(o.spell)a.push(o.spell.map(x=>clean(typeof x==="string"?x.split("#")[0]:x.entrySummary||x.entry||"")).join(", "));
+  if(o.feature)a.push(o.feature.map(x=>clean(String(x))).join(", "));if(o.patron)a.push(o.patron+" patron");
+  if(o.otherSummary)a.push(clean(o.otherSummary.entrySummary||o.otherSummary.entry||""));else if(o.other)a.push(clean(String(o.other)));return a.filter(Boolean).join(", ")}).filter(Boolean).join("; ");
+ for(const f of d.optionalfeature||[]){if(f.reprintedAs||!f.entries||!f.featureType||/^UA|^AU$/.test(f.source))continue;
+  const types=f.featureType,id=f.name+"|"+types.join(","),o=by.get(id);if(o&&(rank[o.source]??9)<=(rank[f.source]??9))continue;
+  const lv=((f.prerequisite||[]).find(p=>p.level)||{}).level;const text=render(f.entries);
+  by.set(id,{key:f.name+"|"+f.source,name:f.name,source:f.source,types,pre:pre(f.prerequisite),lvl:lv?(lv.level||lv):0,rep:/Repeatable/i.test(JSON.stringify(f.entries)),text})}
+ return[...by.values()].sort((a,b)=>a.name.localeCompare(b.name))}
+const optProg=(...src)=>{const p=src.find(x=>x&&x.length);return(p||[]).map(o=>{let c=[];if(Array.isArray(o.progression))c=Array.from({length:20},(_,i)=>o.progression[i]||0);else{let cur=0;for(let l=1;l<=20;l++){if(o.progression&&o.progression[l]!=null)cur=o.progression[l];c.push(cur)}}return{name:o.name,types:o.featureType||[],counts:c}})};
 export function procClasses(files){const out=[];
  for(const f of files){const cfm={},sfm={},look={cf:cfm,sf:sfm};
   (f.classFeature||[]).forEach(x=>{cfm[[x.name,x.className,x.classSource,x.level].join("|").toLowerCase()]=x});
@@ -88,8 +100,8 @@ export function procClasses(files){const out=[];
    const subs=(f.subclass||[]).filter(s=>s.className===c.name&&s.classSource===c.source&&!s.reprintedAs&&!/^UA/.test(s.source)).map(s=>{const sf=[];
     (s.subclassFeatures||(s._copy&&((f.subclass||[]).find(b=>b!==s&&b.name===s._copy.name&&b.source===s._copy.source&&b.className===s._copy.className&&(!s._copy.classSource||b.classSource===s._copy.classSource)&&b.subclassFeatures)||{}).subclassFeatures)||[]).forEach(ref=>{const p=ref.split("|");const x=sfm[[p[0],p[1],p[2]||"PHB",p[3],p[4]||"PHB",p[5]].join("|").toLowerCase()];if(x)sf.push({name:x.name,level:x.level,text:render(expand(x.entries,look))})});
     const bsub=s._copy&&(f.subclass||[]).find(b=>b!==s&&b.name===s._copy.name&&b.source===s._copy.source&&b.className===s._copy.className);
-    return{name:s.name,short:s.shortName,source:s.source,prog:s.casterProgression||(bsub&&bsub.casterProgression)||"",abil:s.spellcastingAbility||(bsub&&bsub.spellcastingAbility)||"",caster:!!(s.casterProgression||(bsub&&bsub.casterProgression)),features:sf}}).filter((s,i,a)=>s.source==="XPHB"||!a.some(o=>o.name===s.name&&o.source==="XPHB")).sort((a,b)=>a.name.localeCompare(b.name));
-   out.push({name:c.name,source:c.source,prog:c.casterProgression||"",abil:c.spellcastingAbility||"",tbl:tblOf(c),caster:!!(c.casterProgression||c.spellcastingAbility),features:feats,subs})}}
+    return{name:s.name,short:s.shortName,source:s.source,prog:s.casterProgression||(bsub&&bsub.casterProgression)||"",abil:s.spellcastingAbility||(bsub&&bsub.spellcastingAbility)||"",caster:!!(s.casterProgression||(bsub&&bsub.casterProgression)),opt:optProg(s.optionalfeatureProgression,bsub&&bsub.optionalfeatureProgression),features:sf}}).filter((s,i,a)=>s.source==="XPHB"||!a.some(o=>o.name===s.name&&o.source==="XPHB")).sort((a,b)=>a.name.localeCompare(b.name));
+   out.push({name:c.name,source:c.source,prog:c.casterProgression||"",abil:c.spellcastingAbility||"",tbl:tblOf(c),caster:!!(c.casterProgression||c.spellcastingAbility),opt:optProg(c.optionalfeatureProgression),features:feats,subs})}}
  return out.sort((a,b)=>a.name.localeCompare(b.name))}
 
 // mundane weapons from items-base.json (newest printing of each name wins)
