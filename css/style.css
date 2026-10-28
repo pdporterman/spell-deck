@@ -175,3 +175,4 @@ input[type=number]{width:5rem}
 .weapon{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 12px}
 .grip{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;padding:6px 10px;font-size:1.2rem;color:var(--mut);line-height:1}
 .pickrow.dragging{position:relative;z-index:5;background:var(--card);box-shadow:0 4px 14px rgba(0,0,0,.3);border-radius:8px;opacity:.95}
+.optbox{margin:.6rem 0 1rem}.optbox h4.hi{margin:.2rem 0 .4rem}
