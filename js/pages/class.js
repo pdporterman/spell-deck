@@ -2,7 +2,7 @@
 import * as S from '../store.js';
 import { D, ckey } from '../data.js';
 import { el, modal } from '../ui.js';
-import { classFeatCard, cfeats, isSubPH, ordLvl, rail, col, section, collapseTools } from '../cards.js';
+import { gcard, classFeatCard, cfeats, isSubPH, ordLvl, rail, col, section, collapseTools } from '../cards.js';
 import { openClassEditor } from '../pickers.js';
 import { expSlots } from '../rules.js';
 import { sgn } from '../ui.js';
@@ -32,6 +32,27 @@ function expertiseBox(ch, id, n, redraw) {
     wrap.append(el('label', null, 'Expertise skill' + (n > 1 ? ' ' + (i + 1) : ''), el('select', { 'aria-label': 'Expertise skill', on: { change: e => { picks[i] = e.target.value || null; S.save(); redraw(); } } },
       el('option', { value: '', text: prof.length ? 'Choose…' : 'Mark proficiencies on the Character Sheet first' }), opts.map(x => el('option', { value: x, text: x, selected: picks[i] === x })))));
   }
+  return wrap;
+}
+// Metamagic, Eldritch Invocations, Maneuvers, Fighting Styles...: pick from the 5etools list, only the chosen ones show as cards
+function optionBox(ch, owner, ownerName, prog, lv, clsLv, redraw) {
+  const n = prog.counts[lv - 1] || 0;
+  if (!n) return null;
+  const id = 'of:' + owner + ':' + prog.name, picks = ch.picks[id] = ch.picks[id] || [];
+  const pool = D.opts.filter(o => o.types.some(t => prog.types.includes(t)));
+  const byName = nm => pool.find(o => o.name === nm);
+  const done = picks.slice(0, n).filter(Boolean).length;
+  const wrap = el('div', { class: 'optbox' }, el('h4', { class: 'hi', text: prog.name + ' · ' + done + ' of ' + n + ' chosen' }));
+  const sels = el('div', { class: 'choice' }), cards = [];
+  for (let i = 0; i < n; i++) {
+    const taken = new Set(picks.slice(0, n).filter((x, j) => x && j !== i && !(byName(x) || {}).rep));
+    sels.append(el('label', null, prog.name.replace(/s$/, '') + ' ' + (i + 1), el('select', { 'aria-label': prog.name + ' ' + (i + 1), on: { change: e => { picks[i] = e.target.value || null; S.save(); redraw(); } } },
+      el('option', { value: '', text: pool.length ? 'Choose…' : 'Loading… (open the app online once)' }),
+      pool.map(o => { const lock = o.lvl > clsLv, dup = taken.has(o.name); return el('option', { value: o.name, selected: picks[i] === o.name, disabled: (lock || dup) && picks[i] !== o.name, text: o.name + (lock ? ' (level ' + o.lvl + ')' : '') + (o.source !== 'XPHB' && o.source !== 'PHB' ? ' · ' + o.source : '') }); }))));
+    const o = byName(picks[i]);
+    if (o) cards.push(gcard({ t: o.name, meta: prog.name + (o.pre ? ' · Requires ' + o.pre : ''), body: o.text, foot: o.source, mid: id + ':' + o.name, ch }));
+  }
+  wrap.append(sels, cards.length ? col(cards) : '');
   return wrap;
 }
 const openTables = new Set();
@@ -65,6 +86,8 @@ export function mount(root, { ch, redraw }) {
     const tbl = classTable(k, lv); tbl.hidden = !openTables.has(ck);
     const tb = el('button', { class: 'lvb', text: 'Table', 'aria-expanded': String(!tbl.hidden), on: { click: () => { tbl.hidden = !tbl.hidden; tbl.hidden ? openTables.delete(ck) : openTables.add(ck); tb.setAttribute('aria-expanded', String(!tbl.hidden)); } } });
     inner.append(tbl);
+    for (const pr of k.opt || []) { const b = optionBox(ch, ck, k.name, pr, lv, lv, redraw); if (b) inner.append(b); }
+    if (s) for (const pr of s.opt || []) { const b = optionBox(ch, ck + '|' + s.short, s.name, pr, lv, lv, redraw); if (b) inner.append(b); }
     const pick = k.features.find(f => isSubPH(f) && !/feature$/i.test(f.name));
     if (!s && k.subs.length && pick && lv >= pick.level) inner.append(el('p', { class: 'who', text: 'Level ' + pick.level + ': choose a ' + k.name + ' subclass with Edit (top right).' }));
     inner.append(cards.length ? (list.length === 1 ? col(cards) : rail(cards)) : el('div', { class: 'empty', text: hid.size ? 'No cards for the levels you selected. Use Levels to show more.' : 'No features at this level.' }));
