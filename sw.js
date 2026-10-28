@@ -1,5 +1,5 @@
 // Offline support. Bump VERSION whenever any file changes so installed copies refresh.
-const VERSION = 'spelldeck-v23';
+const VERSION = 'spelldeck-v25';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/style.css',
   'icons/icon-180.png?v=2', 'icons/icon-192.png?v=2', 'icons/icon-512.png?v=2',
