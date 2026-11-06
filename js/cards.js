@@ -13,7 +13,7 @@ export function gcard(o) {
   const mn = !!(o.mid && o.ch), mini = mn && isMin(o.ch, o.mid);
   const n = html(`<div class="card ${o.cls || ''}${mini ? ' mini' : ''}"${o.cc ? ` style="--cc:${o.cc}"` : ''}>${o.wm ? `<div class="wm">${o.wm}</div>` : ''}<div class="ch"${mn ? ` data-mn="${esc(o.mid)}" role="button" aria-expanded="${!mini}"` : ''}><h3>${esc(o.t)}</h3>${mn ? `<span class="mn" aria-hidden="true">${mini ? '▸' : '▾'}</span>` : ''}</div><div class="meta">${esc(o.meta || '')}</div>${o.dl && o.dl.length ? `<dl>${o.dl.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : ''}<div class="body">${o.body || ''}</div><div class="ft"><span>${esc(o.foot || '')}</span></div></div>`);
   if (o.btn) n.querySelector('.ft').append(o.btn);
-  if (o.extra) n.querySelector('.body').before(o.extra);
+  if (o.extra) n.querySelector('.body').prepend(o.extra);
   if (mn) n.querySelector('.ch').addEventListener('click', () => setCardMin(n, o.ch, o.mid, !n.classList.contains('mini')));
   return n;
 }
