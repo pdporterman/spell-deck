@@ -11,7 +11,7 @@ import { inSel, getSel, pickLabel, filterButton, featOpts } from '../filters.js'
 export const title = 'Features & Traits';
 
 // dropdowns for "choose an ability score" slots (feats, older species)
-function abilityPicks(ch, id, ab) {
+export function abilityPicks(ch, id, ab) {
   if (!ab || !ab.length) return null;
   const alt = isAlt(ab), wrap = el('div', { class: 'choice' });
   const draw = () => {

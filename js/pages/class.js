@@ -4,7 +4,8 @@ import { D, ckey } from '../data.js';
 import { el, modal } from '../ui.js';
 import { gcard, classFeatCard, cfeats, isSubPH, ordLvl, rail, col, section, collapseTools } from '../cards.js';
 import { openClassEditor } from '../pickers.js';
-import { expSlots } from '../rules.js';
+import { expSlots, ASI_AB } from '../rules.js';
+import { abilityPicks } from './traits.js';
 import { sgn } from '../ui.js';
 
 export const title = 'Class Abilities';
@@ -68,6 +69,41 @@ function choiceBox(ch, mid, f, redraw) {
   const sel = el('select', { 'aria-label': f.name + ' choice', on: { change: e => { ch.picks[id] = e.target.value || null; S.save(); show(); } } }, el('option', { value: '', text: 'Choose…' }), f.choice.opts.map(o => el('option', { value: o.name, text: o.name, selected: ch.picks[id] === o.name })));
   return el('div', null, el('div', { class: 'choice' }, el('label', null, 'Your choice', sel)), body);
 }
+// Ability Score Improvement / Epic Boon cards: spend the level on +2/+1+1 or on a feat (the feat is added to Features & Traits)
+function asiBox(ch, mid, f, redraw) {
+  const epic = /epic boon/i.test(f.name), rec = ch.asi[mid] = ch.asi[mid] || { t: epic ? 'feat' : 'asi' };
+  const pool = D.feats.filter(x => (epic ? x.cat === 'Epic Boon' : (x.cat === 'General' || x.cat === 'Feat')) && x.name !== 'Ability Score Improvement').sort((a, b) => a.name.localeCompare(b.name));
+  const setFeat = key => {
+    const old = rec.feat;
+    if (old && rec.added && !Object.entries(ch.asi).some(([m, r]) => m !== mid && r.feat === old)) ch.feats = ch.feats.filter(x => x !== old);
+    rec.feat = key || null; rec.added = false;
+    if (key && !ch.feats.includes(key)) { ch.feats.push(key); rec.added = true; }
+    S.save(); redraw();
+  };
+  const wrap = el('div');
+  if (!epic) wrap.append(el('div', { class: 'choice' }, el('label', null, 'Use this level for', el('select', { 'aria-label': 'Ability score improvement or feat', on: { change: e => { rec.t = e.target.value; if (rec.t === 'asi') { setFeat(null); } else { S.save(); redraw(); } } } },
+    el('option', { value: 'asi', text: 'Ability Score Improvement', selected: rec.t === 'asi' }), el('option', { value: 'feat', text: 'A feat', selected: rec.t === 'feat' })))));
+  if (rec.t === 'asi') { const pk = abilityPicks(ch, 'asi:' + mid, ASI_AB); if (pk) wrap.append(pk); }
+  else wrap.append(el('div', { class: 'choice' }, el('label', null, epic ? 'Epic Boon feat' : 'Feat (added to Features & Traits)', el('select', { 'aria-label': 'Feat choice', on: { change: e => setFeat(e.target.value) } },
+    el('option', { value: '', text: pool.length ? 'Choose…' : 'Loading… (open the app online once)' }), pool.map(x => el('option', { value: x.key, text: x.name + (x.pre ? ' (' + x.pre + ')' : ''), selected: rec.feat === x.key }))))));
+  return wrap;
+}
+// "pick from a list" features: Weapon Mastery, Fiendish Resilience, Replicate Magic Item...
+const DASH = s => s;
+function pickBox(ch, mid, f, k, lv, redraw) {
+  const pk = f.pick, id = 'pk:' + mid, picks = ch.picks[id] = ch.picks[id] || [];
+  let n = pk.n;
+  if (pk.col && k && k.tbl) { const c = k.tbl.cols.find(x => x.l.toLowerCase() === pk.col.toLowerCase()); const v = c && parseInt(c.v[lv - 1], 10); if (v > 0) n = v; }
+  const opts = pk.kind === 'weapon' ? D.weapons.filter(w => w.source === 'XPHB' && w.mastery.length && (!pk.melee || !w.rng)).map(w => ({ name: w.name, lvl: 0, note: w.mastery.join('/') })) : pk.opts;
+  const wrap = el('div', { class: 'choice' });
+  for (let i = 0; i < n; i++) {
+    const taken = new Set(picks.slice(0, n).filter((x, j) => x && j !== i && !((opts.find(o => o.name === x) || {}).rep)));
+    wrap.append(el('label', null, pk.label + (n > 1 ? ' ' + (i + 1) + ' of ' + n : ''), el('select', { 'aria-label': pk.label + ' ' + (i + 1), on: { change: e => { picks[i] = e.target.value || null; S.save(); redraw(); } } },
+      el('option', { value: '', text: opts.length ? 'Choose…' : 'Loading… (open the app online once)' }),
+      opts.map(o => { const lock = o.lvl > lv, dup = taken.has(o.name); return el('option', { value: o.name, selected: picks[i] === o.name, disabled: (lock || dup) && picks[i] !== o.name, text: o.name + (o.note ? ' (' + o.note + ')' : '') + (lock ? ' (level ' + o.lvl + ')' : '') }); }))));
+  }
+  return wrap;
+}
 const openTables = new Set();
 function classTable(k, lv) {
   const cols = (k.tbl && k.tbl.cols) || [];
@@ -95,6 +131,8 @@ export function mount(root, { ch, redraw }) {
       const card = f.own ? classFeatCard(f, s.name, 1, k.name, mid, ch) : classFeatCard(f, k.name, 0, k.name, mid, ch);
       const n = expSlots(f.name);
       if (n) card.querySelector('.body').before(expertiseBox(ch, mid, n, redraw));
+      if (/^(ability score improvement|epic boon)$/i.test(f.name) && !f.own) card.querySelector('.body').before(asiBox(ch, mid, f, redraw));
+      if (f.pick) card.querySelector('.body').before(pickBox(ch, mid, f, k, lv, redraw));
       if (f.choice) card.querySelector('.body').after(choiceBox(ch, mid, f, redraw));
       for (const [owner, pr] of at.get(f.own + ':' + f.level + ':' + f.name) || []) card.querySelector('.body').before(optionControl(ch, owner, pr, lv, redraw));
       return card;
