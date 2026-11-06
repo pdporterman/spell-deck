@@ -1,6 +1,6 @@
 // Popups that edit a character: spells, feats, class levels.
 import * as S from './store.js';
-import { D, key, ckey } from './data.js';
+import { D, key, ckey, wowHidden } from './data.js';
 import { el, clear, modal } from './ui.js';
 import { spellList, featList } from './lists.js';
 
@@ -40,7 +40,7 @@ export function classEditor(ch, onChange) {
         k.subs.length && lv >= 3 ? el('div', { style: 'flex-basis:100%' }, sub) : null));
     }
     const add = el('select', { 'aria-label': 'Add a class' }, el('option', { value: '', text: have.length ? 'Add another class…' : 'Add a class…' }),
-      D.classes.filter(k => !(ch.classes[ckey(k)] > 0)).map(k => el('option', { value: ckey(k), text: k.name + (k.source !== 'XPHB' ? ' (' + k.source + ')' : '') })));
+      D.classes.filter(k => !(ch.classes[ckey(k)] > 0) && !wowHidden(k, S.get().settings)).map(k => el('option', { value: ckey(k), text: k.name + (k.source !== 'XPHB' ? ' (' + k.source + ')' : '') })));
     add.addEventListener('change', () => { if (!add.value || S.total(ch) >= 20) return; ch.classes[add.value] = 1; S.save(); onChange && onChange(); draw(); });
     root.append(el('div', { style: 'margin-top:.6rem' }, add));
     if (!D.classes.length) root.append(el('p', { class: 'muted small', text: "Class data hasn't downloaded yet." }));

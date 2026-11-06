@@ -1,6 +1,6 @@
 // Searchable lists used by the Reference pages and by the add/remove popups.
 import * as S from './store.js';
-import { D, key, ckey } from './data.js';
+import { D, key, ckey, wowHidden } from './data.js';
 import { el, clear } from './ui.js';
 import { spellCard, featCard, speciesCards, classFeatCard, cfeats, byLvl, rail, col } from './cards.js';
 import { filterButton, spellOpts, featOpts, inSel, getSel } from './filters.js';
@@ -75,7 +75,7 @@ export function speciesList(sel, onDraw) {
 export function classList(onDraw) {
   return makeList({
     onDraw, empty: () => (D.classes.length ? 'No matches.' : 'Loading…'),
-    items: q => D.classes.filter(k => k.name.toLowerCase().includes(q)).map(k => ({
+    items: q => D.classes.filter(k => k.name.toLowerCase().includes(q) && !wowHidden(k, S.get().settings)).map(k => ({
       k: 'c:' + ckey(k), n: k.name, s: k.source,
       card: () => el('div', null, rail(byLvl(cfeats(k)).map(f => classFeatCard(f, k.name, 0, k.name, null, null))),
         k.subs.length ? el('h3', { class: 'hi', text: 'Subclasses' }) : null,

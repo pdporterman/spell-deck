@@ -15,7 +15,7 @@ export const STATS = [
 ];
 
 const defaults = () => ({
-  settings: { night: false, px: 16, groupFeats: false, newestFirst: false, resAsCounter: false },
+  settings: { night: false, px: 16, groupFeats: false, newestFirst: false, resAsCounter: false, showWow: false },
   chars: {}, cur: null, last: { view: 'ref-spells' }, menuOpen: 'ref',
   filters: { sf: null, ff: null },
 });

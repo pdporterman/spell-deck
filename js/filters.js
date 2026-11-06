@@ -1,9 +1,9 @@
 // Multi-select filter popups (spell class lists, feat categories). null = everything selected.
 import * as S from './store.js';
-import { D } from './data.js';
+import { D, wowHidden } from './data.js';
 import { el, modal } from './ui.js';
 
-export const spellOpts = () => [...new Set(D.spells.flatMap(x => x.classes))].sort();
+export const spellOpts = () => { const hide = new Set(D.classes.filter(k => wowHidden(k, S.get().settings)).map(k => k.name)); return [...new Set(D.spells.flatMap(x => x.classes))].filter(c => !hide.has(c)).sort(); };
 export const featOpts = () => [...new Set(D.feats.map(x => x.cat))].sort();
 export const inSel = (sel, arr) => sel === null || arr.some(x => sel.includes(x));
 export const pickLabel = (sel, word) => sel === null ? 'All ' + word : !sel.length ? 'No ' + word : sel.length <= 2 ? sel.join(', ') : sel.length + ' ' + word;

@@ -55,4 +55,6 @@ export async function init(force, onChange, status = () => {}) {
 // ---- lookups ----
 export const spellByKey = new Map();
 export function indexData() { spellByKey.clear(); D.spells.forEach(s => spellByKey.set(key(s), s)); }
+// World of Warcraft classes (source "WoW") duplicate core classes, so they are hidden unless Settings turns them on
+export const wowHidden = (k, settings) => k.source === 'WoW' && !(settings && settings.showWow);
 export const classKeyName = ck => (D.classes.find(k => ckey(k) === ck) || {}).name || ck.split('|')[0];
