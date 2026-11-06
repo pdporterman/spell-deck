@@ -76,7 +76,7 @@ function withPicks(card, ch, f, redraw) {
       el('button', { class: 'btn small icon', text: '+', 'aria-label': 'Take ' + f.name + ' again', on: { click: () => set(n + 1) } })))));
   }
   for (let i = 0; i < n; i++) { const pk = abilityPicks(ch, 'f:' + f.key + (i ? '#' + (i + 1) : ''), f.ab); if (pk) { if (n > 1) box.append(el('p', { class: 'small muted', text: 'Time ' + (i + 1) })); box.append(pk); } }
-  if (box.children.length) card.querySelector('.body').before(box);
+  if (box.children.length) card.querySelector('.body').prepend(box);
   return card;
 }
 export const edit = ({ ch, redraw }) => openFeatPicker(ch, redraw);

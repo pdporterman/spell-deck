@@ -130,11 +130,11 @@ export function mount(root, { ch, redraw }) {
       const mid = f.own ? 'sf:' + ck + '|' + s.short + '|' + s.source + ':' + f.level + ':' + f.name : 'cf:' + ck + ':' + f.level + ':' + f.name;
       const card = f.own ? classFeatCard(f, s.name, 1, k.name, mid, ch) : classFeatCard(f, k.name, 0, k.name, mid, ch);
       const n = expSlots(f.name);
-      if (n) card.querySelector('.body').before(expertiseBox(ch, mid, n, redraw));
-      if (/^(ability score improvement|epic boon)$/i.test(f.name) && !f.own) card.querySelector('.body').before(asiBox(ch, mid, f, redraw));
-      if (f.pick) card.querySelector('.body').before(pickBox(ch, mid, f, k, lv, redraw));
-      if (f.choice) card.querySelector('.body').after(choiceBox(ch, mid, f, redraw));
-      for (const [owner, pr] of at.get(f.own + ':' + f.level + ':' + f.name) || []) card.querySelector('.body').before(optionControl(ch, owner, pr, lv, redraw));
+      if (n) card.querySelector('.body').prepend(expertiseBox(ch, mid, n, redraw));
+      if (/^(ability score improvement|epic boon)$/i.test(f.name) && !f.own) card.querySelector('.body').prepend(asiBox(ch, mid, f, redraw));
+      if (f.pick) card.querySelector('.body').prepend(pickBox(ch, mid, f, k, lv, redraw));
+      if (f.choice) card.querySelector('.body').append(choiceBox(ch, mid, f, redraw));
+      for (const [owner, pr] of at.get(f.own + ':' + f.level + ':' + f.name) || []) card.querySelector('.body').prepend(optionControl(ch, owner, pr, lv, redraw));
       return card;
     });
     const lvb = el('button', { class: 'lvb', text: hid.size ? 'Levels · ' + (lv - hid.size) + ' of ' + lv : 'Levels', on: { click: () => openLevels(ch, k, redraw) } });
