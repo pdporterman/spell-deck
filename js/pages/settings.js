@@ -4,7 +4,7 @@ import * as D from '../data.js';
 import { el, toast, confirmBox } from '../ui.js';
 import { applySettings } from '../theme.js';
 
-export const VER = 26;
+export const VER = 27;
 export const title = 'Settings';
 const PX_MIN = 12, PX_MAX = 28;
 
@@ -42,6 +42,7 @@ export function mount(root, { status }) {
       row('Text size', 'In pixels. Cards scale with it.', size),
       row('Group feats by category', 'Origin, General… on the Features & Traits page.', sw('groupFeats', 'Group feats')),
       row('Resources as counters', 'Resources page shows a number you add to or subtract from, instead of the check-box table.', sw('resAsCounter', 'Resources as counters')),
+      row('Show World of Warcraft classes', 'Off by default. The Warcraft book repeats core classes (Mage, Priest, Warrior…). Its subclasses for the normal classes always show.', sw('showWow', 'Show Warcraft classes')),
       row('Newest class abilities first', 'Class Abilities shows your highest levels first.', sw('newestFirst', 'Newest first'))),
     el('section', { class: 'panel' }, el('h3', { text: 'Characters' }),
       el('p', { class: 'muted small', text: 'Export one character to a file to share or move it, or import one. Everything else stays on this device.' }),
