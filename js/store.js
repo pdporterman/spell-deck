@@ -31,7 +31,7 @@ export function fixChar(c) {
   c.classes = c.classes || {}; c.subs = c.subs || {}; c.min = c.min || []; c.lvf = c.lvf || {};
   c.pf = c.pf || {}; c.bon = c.bon || {}; c.bon.joat = c.bon.joat ? 1 : 0; c.bon.ra = c.bon.ra ? 1 : 0; c.bon.list = c.bon.list || [];
   c.cts = c.cts || []; c.sc = c.sc || {};
-  c.fc = c.fc || {}; c.weapons = c.weapons || []; c.picks = c.picks || {}; c.cb = c.cb || {}; c.res = c.res || {}; c.res.used = c.res.used || {};
+  c.fc = c.fc || {}; c.asi = c.asi || {}; c.weapons = c.weapons || []; c.picks = c.picks || {}; c.cb = c.cb || {}; c.res = c.res || {}; c.res.used = c.res.used || {};
   if (!c.hasRes) { c.hasRes = 1; if (!c.pages.includes('resources')) { const i = c.pages.indexOf('counters'); c.pages.splice(i < 0 ? c.pages.length : i, 0, 'resources'); } }
   for (const a of STATS) if (!(c.sc[a[0]] >= 1)) c.sc[a[0]] = 10;
   c.hp = c.hp || {}; c.hp.max = c.hp.max > 0 ? c.hp.max : 0; c.hp.cur = c.hp.cur >= 0 ? c.hp.cur : c.hp.max; c.hp.temp = c.hp.temp > 0 ? c.hp.temp : 0;

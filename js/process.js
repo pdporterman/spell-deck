@@ -85,8 +85,18 @@ function findOpts(e,look,d){if(!e||typeof e!=="object"||(d||0)>4)return null;if(
  return findOpts(e.entries,look,(d||0)+1)}
 function strip(e,node){if(Array.isArray(e))return e.map(x=>strip(x,node)).filter(x=>x!=null);if(!e||typeof e!=="object")return e;if(e===node)return null;
  if(e.entries){const o={...e,entries:strip(e.entries,node)};return o.entries.length?o:null}return e}
-function mkf(x,look){const f=findOpts(x.entries,look);
- if(!f)return{name:x.name,level:x.level,text:render(expand(x.entries,look))};
+const DMG_TYPES=["Acid","Bludgeoning","Cold","Fire","Lightning","Necrotic","Piercing","Poison","Psychic","Radiant","Slashing","Thunder"];
+// features where the player picks things from a list (weapon masteries, a resistance, magic item plans) so they can keep track of them
+function pickOf(x){const n=x.name;
+ if(n==="Weapon Mastery"&&x.source==="XPHB"){const m=/of (two|three|four|five|six) kinds/i.exec(JSON.stringify(x.entries));return{kind:"weapon",label:"Weapon",col:"Weapon Mastery",n:m?{two:2,three:3,four:4,five:5,six:6}[m[1].toLowerCase()]:2,melee:x.className==="Barbarian"}}
+ if(n==="Fiendish Resilience")return{kind:"list",label:"Damage type",n:1,opts:DMG_TYPES.map(name=>({name,lvl:0}))};
+ if(n==="Replicate Magic Item"){const opts=[];const walk=e=>{if(Array.isArray(e))e.forEach(walk);else if(e&&typeof e==="object"){if(e.type==="table"&&/Magic Item Plans/.test(e.caption||"")){const lv=+((/Level (\d+)/.exec(e.caption)||[])[1]||0);
+   for(const r of e.rows||[]){const raw=typeof r[0]==="string"?r[0]:"",nm=clean(raw).replace(/\*$/,"").trim();if(nm)opts.push({name:nm,lvl:lv,rep:/\*\s*$/.test(raw)||/^(Common|Uncommon|Rare)/.test(nm)})}}
+   for(const k in e)if(typeof e[k]==="object")walk(e[k])}};walk(x.entries);
+  if(opts.length)return{kind:"list",label:"Plan",col:"Plans Known",n:4,opts}}
+ return null}
+function mkf(x,look){const f=findOpts(x.entries,look),pick=pickOf(x);
+ if(!f)return pick?{name:x.name,level:x.level,text:render(expand(x.entries,look)),pick}:{name:x.name,level:x.level,text:render(expand(x.entries,look))};
  return{name:x.name,level:x.level,text:render(expand(strip(x.entries,f.node),look)),choice:{opts:f.opts}}}
 // optional features: metamagic, eldritch invocations, maneuvers, fighting styles, infusions, pact boons...
 export function procOpts(d){const rank={XPHB:0,TCE:1,PHB:2},by=new Map();
@@ -104,6 +114,10 @@ export function procClasses(files){const out=[];
  for(const f of files){const cfm={},sfm={},look={cf:cfm,sf:sfm};
   (f.classFeature||[]).forEach(x=>{cfm[[x.name,x.className,x.classSource,x.level].join("|").toLowerCase()]=x});
   (f.subclassFeature||[]).forEach(x=>{sfm[[x.name,x.className,x.classSource,x.subclassShortName,x.subclassSource,x.level].join("|").toLowerCase()]=x});
+  // 2024 versions of older features are {_copy} of the original with no text of their own: borrow the original's entries
+  const baseOf=(x,m,sc)=>{const c=x._copy;return m[(sc?[c.name,c.className,c.classSource,c.subclassShortName,c.subclassSource,c.level]:[c.name,c.className,c.classSource,c.level]).join("|").toLowerCase()]};
+  for(let pass=0;pass<3;pass++){for(const x of f.classFeature||[])if(x._copy&&!x.entries){const b=baseOf(x,cfm,false);if(b&&b.entries)x.entries=b.entries}
+   for(const x of f.subclassFeature||[])if(x._copy&&!x.entries){const b=baseOf(x,sfm,true);if(b&&b.entries)x.entries=b.entries}}
   for(const c of f.class||[]){if(c.reprintedAs||c.isSidekick||/^UA/.test(c.source))continue;
    const feats=[];(c.classFeatures||[]).forEach(r=>{const p=(typeof r==="string"?r:r.classFeature).split("|");
     const x=cfm[[p[0],p[1],p[2]||"PHB",p[3]].join("|").toLowerCase()];if(x)feats.push(mkf(x,look))});

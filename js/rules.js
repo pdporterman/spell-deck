@@ -43,8 +43,10 @@ export function abSlots(ab, mode) {
   }
   return { fixed, slots };
 }
+export const ASI_AB = [{ choose: { from: ABK, count: 1, amount: 2 } }, { choose: { from: ABK, count: 2, amount: 1 } }];
 export function abSources(ch) {
   const out = [];
+  for (const [mid, r] of Object.entries(ch.asi || {})) if (r.t === 'asi' && unlocked(ch, mid)) out.push({ id: 'asi:' + mid, ab: ASI_AB, name: 'Ability Score Improvement', mode: +ch.picks['asi:' + mid + '~m'] || 0 });
   for (const key of ch.feats) {
     const f = D.feats.find(x => x.key === key);
     if (!f || !f.ab || !f.ab.length) continue;
