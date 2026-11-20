@@ -10,10 +10,12 @@ import * as traits from './pages/traits.js';
 import * as classes from './pages/class.js';
 import * as spells from './pages/spells.js';
 import * as resources from './pages/resources.js';
+import * as inventory from './pages/inventory.js';
+import * as notes from './pages/notes.js';
 import * as ref from './pages/ref.js';
 import * as settings from './pages/settings.js';
 
-const CHAR_MODS = { sheet, counters, traits, class: classes, spells, resources };
+const CHAR_MODS = { sheet, counters, traits, class: classes, spells, resources, inventory, notes };
 const $page = document.getElementById('page');
 const $title = document.getElementById('title');
 const $drawer = document.getElementById('drawer');
