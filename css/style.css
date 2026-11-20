@@ -177,3 +177,17 @@ input[type=number]{width:5rem}
 .pickrow.dragging{position:relative;z-index:5;background:var(--card);box-shadow:0 4px 14px rgba(0,0,0,.3);border-radius:8px;opacity:.95}
 .optbox{margin:.6rem 0 1rem}.optbox h4.hi{margin:.2rem 0 .4rem}
 .optread{margin:.2rem 0 .5rem;font-size:.85rem}.optread summary{cursor:pointer;color:var(--mut)}
+/* notes + inventory */
+.notes{display:flex;flex-direction:column;gap:12px;max-width:680px}
+.note{border:1px solid var(--bd);border-radius:12px;background:var(--card);padding:10px 12px;box-shadow:var(--shadow)}
+.note-head{display:flex;gap:8px;align-items:center;margin-bottom:6px}.note-title{flex:1;min-width:0;font-weight:bold}
+.note-text,.inv textarea{width:100%;box-sizing:border-box;resize:none;overflow:hidden;font:inherit;font-size:max(16px,1em);background:transparent;color:inherit;border:1px solid var(--bd);border-radius:8px;padding:.4rem .5rem}
+.inv-wrap{max-width:760px;overflow-x:auto}
+table.inv{width:100%;border-collapse:collapse;table-layout:fixed;background:var(--card);border:1px solid var(--bd);border-radius:12px}
+.inv th{text-align:left;font-size:.8rem;color:var(--mut);padding:.4rem .5rem;border-bottom:1px solid var(--bd)}
+.inv th:nth-child(1){width:32%}.inv th:nth-child(3){width:22%}
+.inv td{padding:.4rem .4rem;vertical-align:top;border-bottom:1px solid var(--bd)}
+.inv input[type=text]{width:100%;box-sizing:border-box;min-width:0}
+.inv-name{position:relative}.inv-name .x{margin-top:.25rem}
+.inv-ctl{display:flex;align-items:center;gap:3px}.inv-ctl input{width:100%;min-width:0;text-align:center;box-sizing:border-box}
+@media(max-width:480px){.inv-ctl{flex-direction:column;align-items:stretch}.inv-ctl .btn{padding:.1rem}}
